@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub App Authentication Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .result {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e1e5e9;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 GitHub App Authentication Tester</h1>
+            <p>Test your GitHub App authentication with Smart GitHub Auth (like Vercel/Lovable)</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('install')">Installation</div>
+                <div class="tab" onclick="showTab('smart')">Smart Auth</div>
+                <div class="tab" onclick="showTab('basic')">Basic Auth</div>
+                <div class="tab" onclick="showTab('custom')">Custom Tests</div>
+            </div>
+
+            <!-- Installation Tab -->
+            <div id="install" class="tab-content active">
+                <div class="section">
+                    <h2>🔧 GitHub App Installation</h2>
+                    <p>Install your GitHub App to access repositories and test authentication</p>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="checkInstallationStatus()">Check Status</button>
+                        <button class="btn btn-success" onclick="installGitHubApp()">Install GitHub App</button>
+                        <button class="btn btn-secondary" onclick="showInstallationGuide()">Installation Guide</button>
+                    </div>
+                    
+                    <div id="installationStatus" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Smart GitHub Auth Tab -->
+            <div id="smart" class="tab-content">
+                <div class="section">
+                    <h2>🧠 Smart GitHub Auth (Recommended)</h2>
+                    <p>Like Vercel/Lovable - automatically discovers installations and handles authentication</p>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="testEndpoint('/api/v1/github-smart-auth/app/info')">App Info</button>
+                        <button class="btn" onclick="testEndpoint('/api/v1/github-smart-auth/app/installations')">Get Installations</button>
+                        <button class="btn btn-secondary" onclick="testEndpoint('/api/v1/github-smart-auth/repositories')">Get Repositories</button>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Test Specific Repository:</label>
+                        <input type="text" id="repoInput" placeholder="owner/repo (e.g., octocat/Hello-World)" value="octocat/Hello-World">
+                        <button class="btn btn-success" onclick="testSpecificRepo()">Test Repository</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic GitHub Auth Tab -->
+            <div id="basic" class="tab-content">
+                <div class="section">
+                    <h2>🔧 Basic GitHub Auth</h2>
+                    <p>Traditional GitHub App authentication with installation ID</p>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="testEndpoint('/api/v1/github/auth/test')">Test Auth</button>
+                        <button class="btn" onclick="testEndpoint('/api/v1/github/auth/installations')">Get Installations</button>
+                        <button class="btn btn-secondary" onclick="testEndpoint('/api/v1/github/repositories')">Get Repositories</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Tests Tab -->
+            <div id="custom" class="tab-content">
+                <div class="section">
+                    <h2>🎯 Custom Tests</h2>
+                    <p>Test specific endpoints with custom parameters</p>
+                    
+                    <div class="input-group">
+                        <label>Custom Endpoint:</label>
+                        <input type="text" id="customEndpoint" placeholder="/api/v1/github-smart-auth/repositories/octocat/Hello-World/contents">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Query Parameters (optional):</label>
+                        <input type="text" id="queryParams" placeholder="path=&limit=10">
+                    </div>
+                    
+                    <button class="btn btn-warning" onclick="testCustomEndpoint()">Test Custom Endpoint</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Testing authentication...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        async function testEndpoint(endpoint) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ SUCCESS: ${endpoint}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${endpoint}\n\nStatus: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${endpoint}\n\n${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function testSpecificRepo() {
+            const repo = document.getElementById('repoInput').value;
+            if (!repo) {
+                showResult('❌ Please enter a repository (owner/repo)', 'error');
+                return;
+            }
+            
+            const [owner, repoName] = repo.split('/');
+            if (!owner || !repoName) {
+                showResult('❌ Please enter repository in format: owner/repo', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                // Test repository details
+                const repoResponse = await fetch(`${API_BASE}/api/v1/github-smart-auth/repositories/${owner}/${repoName}`);
+                const repoData = await repoResponse.json();
+                
+                // Test repository contents
+                const contentsResponse = await fetch(`${API_BASE}/api/v1/github-smart-auth/repositories/${owner}/${repoName}/contents`);
+                const contentsData = await contentsResponse.json();
+                
+                let result = `✅ REPOSITORY TEST: ${owner}/${repoName}\n\n`;
+                result += `📁 Repository Details:\n${JSON.stringify(repoData, null, 2)}\n\n`;
+                result += `📂 Repository Contents:\n${JSON.stringify(contentsData, null, 2)}`;
+                
+                showResult(result, 'success');
+            } catch (error) {
+                showResult(`❌ ERROR testing repository ${owner}/${repoName}\n\n${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function testCustomEndpoint() {
+            const endpoint = document.getElementById('customEndpoint').value;
+            const queryParams = document.getElementById('queryParams').value;
+            
+            if (!endpoint) {
+                showResult('❌ Please enter an endpoint', 'error');
+                return;
+            }
+            
+            const fullUrl = queryParams ? `${API_BASE}${endpoint}?${queryParams}` : `${API_BASE}${endpoint}`;
+            
+            showLoading();
+            try {
+                const response = await fetch(fullUrl);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ SUCCESS: ${fullUrl}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${fullUrl}\n\nStatus: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${fullUrl}\n\n${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+            resultDiv.className = `result ${type}`;
+        }
+
+        // Installation functions
+        async function checkInstallationStatus() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/install/status`);
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('installationStatus');
+                statusDiv.style.display = 'block';
+                
+                if (data.installed) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ GitHub App is installed! (${data.count} installation${data.count > 1 ? 's' : ''})
+                        </div>
+                        <div class="result">${JSON.stringify(data, null, 2)}</div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ GitHub App is not installed yet
+                        </div>
+                        <div class="result">${JSON.stringify(data, null, 2)}</div>
+                    `;
+                }
+            } catch (error) {
+                showResult(`❌ Error checking installation status: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        function installGitHubApp() {
+            // Open installation URL in new tab - redirect to GitHub
+            window.open(`${API_BASE}/api/v1/github-smart-auth/install`, '_blank');
+        }
+
+        async function showInstallationGuide() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/install/guide`);
+                const data = await response.json();
+                
+                let guideHtml = `<h3>${data.title}</h3>`;
+                
+                data.steps.forEach(step => {
+                    guideHtml += `
+                        <div style="margin: 15px 0; padding: 15px; border-left: 4px solid #667eea; background: #f8f9fa;">
+                            <h4>Step ${step.step}: ${step.title}</h4>
+                            <p>${step.description}</p>
+                            ${step.permissions ? `<p><strong>Permissions:</strong> ${step.permissions.join(', ')}</p>` : ''}
+                            ${step.options ? `<p><strong>Options:</strong> ${step.options.join(', ')}</p>` : ''}
+                            ${step.endpoints ? `<p><strong>Test Endpoints:</strong> ${step.endpoints.join(', ')}</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                if (data.troubleshooting) {
+                    guideHtml += `<h3>Troubleshooting</h3>`;
+                    data.troubleshooting.common_issues.forEach(issue => {
+                        guideHtml += `
+                            <div style="margin: 10px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7;">
+                                <strong>${issue.issue}:</strong> ${issue.solution}
+                            </div>
+                        `;
+                    });
+                }
+                
+                showResult(guideHtml, 'success');
+            } catch (error) {
+                showResult(`❌ Error getting installation guide: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        // Test connection on page load
+        window.onload = async function() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/app/info`);
+                if (response.ok) {
+                    showResult('✅ Connected to API server successfully! GitHub Smart Auth is ready.', 'success');
+                } else {
+                    showResult('⚠️ API server responded but with an error. Check if your app is running and configured.', 'error');
+                }
+            } catch (error) {
+                showResult('❌ Cannot connect to API server. Make sure your FastAPI app is running on port 8000.', 'error');
+            }
+        };
+    </script>
+</body>
+</html>

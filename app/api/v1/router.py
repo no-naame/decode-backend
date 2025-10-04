@@ -3,6 +3,7 @@ from app.modules.invisible_labor_scoring.routes import router as invisible_labor
 from app.modules.sentiment_analysis.routes import router as sentiment_router
 from app.modules.burnout_risk_detection.routes import router as burnout_router
 from app.modules.shareable_contribution_profile.routes import router as profile_router
+from app.modules.github_smart_auth.routes import router as github_smart_auth_router
 
 api_router = APIRouter()
 
@@ -29,4 +30,10 @@ api_router.include_router(
     profile_router,
     prefix="/shareable-contribution-profile",
     tags=["Shareable Contribution Profile"]
+)
+
+api_router.include_router(
+    github_smart_auth_router,
+    prefix="/github-smart-auth",
+    tags=["GitHub Smart Authentication"]
 )
