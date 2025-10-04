@@ -207,14 +207,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 GitHub App Authentication Tester</h1>
-            <p>Test your GitHub App authentication with Smart GitHub Auth (like Vercel/Lovable)</p>
+            <h1>🚀 GitHub API Dashboard</h1>
+            <p>Complete GitHub data access with REST API v3 + GraphQL v4 + GitHub Discussions</p>
         </div>
 
         <div class="content">
             <div class="tabs">
                 <div class="tab active" onclick="showTab('install')">Installation</div>
                 <div class="tab" onclick="showTab('smart')">Smart Auth</div>
+                <div class="tab" onclick="showTab('graphql')">GraphQL Analytics</div>
+                <div class="tab" onclick="showTab('discussions')">Discussions</div>
                 <div class="tab" onclick="showTab('basic')">Basic Auth</div>
                 <div class="tab" onclick="showTab('custom')">Custom Tests</div>
             </div>
@@ -252,6 +254,74 @@
                         <input type="text" id="repoInput" placeholder="owner/repo (e.g., octocat/Hello-World)" value="octocat/Hello-World">
                         <button class="btn btn-success" onclick="testSpecificRepo()">Test Repository</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- GraphQL Analytics Tab -->
+            <div id="graphql" class="tab-content">
+                <div class="section">
+                    <h2>🚀 GraphQL v4 Analytics</h2>
+                    <p>Advanced GitHub data using GraphQL API - contributions, analytics, and detailed metrics</p>
+                    
+                    <div class="input-group">
+                        <label>GitHub Username:</label>
+                        <input type="text" id="graphqlUsername" placeholder="username (e.g., octocat)" value="octocat">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="getUserContributions()">📊 User Contributions</button>
+                        <button class="btn btn-secondary" onclick="getUserRepositoriesDetailed()">📚 Detailed Repos</button>
+                        <button class="btn btn-success" onclick="getOrganizationMembers()">👥 Org Members</button>
+                        <button class="btn btn-warning" onclick="searchRepositories()">🔍 Search Repos</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>📈 Repository Analytics</h2>
+                    <p>Get comprehensive repository analytics and metrics</p>
+                    
+                    <div class="input-group">
+                        <label>Repository (owner/repo):</label>
+                        <input type="text" id="analyticsRepo" placeholder="owner/repo (e.g., octocat/Hello-World)" value="octocat/Hello-World">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Since Date (ISO format):</label>
+                        <input type="text" id="sinceDate" placeholder="2024-01-01T00:00:00Z" value="2024-01-01T00:00:00Z">
+                    </div>
+                    
+                    <button class="btn" onclick="getRepositoryAnalytics()">📊 Get Repository Analytics</button>
+                </div>
+            </div>
+
+            <!-- GitHub Discussions Tab -->
+            <div id="discussions" class="tab-content">
+                <div class="section">
+                    <h2>💬 GitHub Discussions</h2>
+                    <p>Access GitHub Discussions data (GraphQL only) - categories, discussions, and comments</p>
+                    
+                    <div class="input-group">
+                        <label>Repository (owner/repo):</label>
+                        <input type="text" id="discussionsRepo" placeholder="owner/repo (e.g., microsoft/vscode)" value="microsoft/vscode">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="getDiscussionCategories()">🏷️ Discussion Categories</button>
+                        <button class="btn btn-secondary" onclick="getRepositoryDiscussions()">💬 Get Discussions</button>
+                        <button class="btn btn-success" onclick="searchDiscussions()">🔍 Search Discussions</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>🎯 Specific Discussion</h2>
+                    <p>Get detailed information about a specific discussion</p>
+                    
+                    <div class="input-group">
+                        <label>Discussion Number:</label>
+                        <input type="number" id="discussionNumber" placeholder="123" value="1">
+                    </div>
+                    
+                    <button class="btn" onclick="getSpecificDiscussion()">📝 Get Discussion Details</button>
                 </div>
             </div>
 
@@ -483,6 +553,237 @@
                 showResult(guideHtml, 'success');
             } catch (error) {
                 showResult(`❌ Error getting installation guide: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        // GraphQL Analytics Functions
+        async function getUserContributions() {
+            const username = document.getElementById('graphqlUsername').value;
+            if (!username) {
+                showResult('❌ Please enter a username', 'error');
+                return;
+            }
+            
+            const endDate = new Date().toISOString().split('T')[0];
+            const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/graphql/contributions?username=${username}&from_date=${startDate}&to_date=${endDate}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ USER CONTRIBUTIONS: ${username}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function getUserRepositoriesDetailed() {
+            const username = document.getElementById('graphqlUsername').value;
+            if (!username) {
+                showResult('❌ Please enter a username', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/graphql/repositories?username=${username}&first=10`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ DETAILED REPOSITORIES: ${username}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function getOrganizationMembers() {
+            const org = prompt('Enter organization name:');
+            if (!org) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/graphql/org-members?org=${org}&first=20`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ ORGANIZATION MEMBERS: ${org}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function searchRepositories() {
+            const query = prompt('Enter search query (e.g., "language:python stars:>1000"):');
+            if (!query) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/graphql/search?query=${encodeURIComponent(query)}&first=10`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ REPOSITORY SEARCH: "${query}"\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function getRepositoryAnalytics() {
+            const repo = document.getElementById('analyticsRepo').value;
+            const since = document.getElementById('sinceDate').value;
+            
+            if (!repo) {
+                showResult('❌ Please enter a repository (owner/repo)', 'error');
+                return;
+            }
+            
+            const [owner, repoName] = repo.split('/');
+            if (!owner || !repoName) {
+                showResult('❌ Please enter repository in format: owner/repo', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/graphql/analytics?owner=${owner}&repo=${repoName}&since=${encodeURIComponent(since)}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ REPOSITORY ANALYTICS: ${owner}/${repoName}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        // GitHub Discussions Functions
+        async function getDiscussionCategories() {
+            const repo = document.getElementById('discussionsRepo').value;
+            if (!repo) {
+                showResult('❌ Please enter a repository (owner/repo)', 'error');
+                return;
+            }
+            
+            const [owner, repoName] = repo.split('/');
+            if (!owner || !repoName) {
+                showResult('❌ Please enter repository in format: owner/repo', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/discussions/categories?owner=${owner}&repo=${repoName}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ DISCUSSION CATEGORIES: ${owner}/${repoName}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function getRepositoryDiscussions() {
+            const repo = document.getElementById('discussionsRepo').value;
+            if (!repo) {
+                showResult('❌ Please enter a repository (owner/repo)', 'error');
+                return;
+            }
+            
+            const [owner, repoName] = repo.split('/');
+            if (!owner || !repoName) {
+                showResult('❌ Please enter repository in format: owner/repo', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/discussions?owner=${owner}&repo=${repoName}&first=10`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ REPOSITORY DISCUSSIONS: ${owner}/${repoName}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function searchDiscussions() {
+            const query = prompt('Enter discussion search query (e.g., "discussions:>0 language:python"):');
+            if (!query) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/discussions/search?query=${encodeURIComponent(query)}&first=10`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ DISCUSSION SEARCH: "${query}"\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+            hideLoading();
+        }
+
+        async function getSpecificDiscussion() {
+            const repo = document.getElementById('discussionsRepo').value;
+            const number = document.getElementById('discussionNumber').value;
+            
+            if (!repo || !number) {
+                showResult('❌ Please enter repository and discussion number', 'error');
+                return;
+            }
+            
+            const [owner, repoName] = repo.split('/');
+            if (!owner || !repoName) {
+                showResult('❌ Please enter repository in format: owner/repo', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/discussions/${owner}/${repoName}/${number}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ DISCUSSION DETAILS: ${owner}/${repoName}#${number}\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
             }
             hideLoading();
         }

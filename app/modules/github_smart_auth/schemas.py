@@ -146,14 +146,18 @@ class GitHubRepositoryResponse(BaseModel):
 class GitHubContentsResponse(BaseModel):
     """Response for getting repository contents"""
     success: bool
-    path: str
-    contents: List[Dict[str, Any]]
+    path: Optional[str] = None
+    contents: Optional[List[Dict[str, Any]]] = None
+    error: Optional[str] = None
+    message: Optional[str] = None
 
 
 class GitHubFileResponse(BaseModel):
     """Response for getting file content"""
     success: bool
-    file: Dict[str, Any]
+    file: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    message: Optional[str] = None
 
 
 class GitHubBranch(BaseModel):

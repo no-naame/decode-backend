@@ -11,7 +11,7 @@ import jwt
 import time
 import requests
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from app.core.config import settings
@@ -51,7 +51,7 @@ class SmartGitHubAuthService:
         jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
         
         self._jwt_token = jwt_token
-        self._jwt_expires_at = datetime.now() + timedelta(minutes=9)
+        self._jwt_expires_at = datetime.now(timezone.utc) + timedelta(minutes=9)
         
         logger.info("Generated new JWT token for GitHub App")
         return jwt_token
@@ -60,7 +60,7 @@ class SmartGitHubAuthService:
         """Get a valid JWT token for app-level operations"""
         if (self._jwt_token is None or 
             self._jwt_expires_at is None or 
-            datetime.now() >= self._jwt_expires_at):
+            datetime.now(timezone.utc) >= self._jwt_expires_at):
             return self._generate_jwt()
         
         return self._jwt_token
@@ -143,7 +143,7 @@ class SmartGitHubAuthService:
         """Get a valid installation access token for a specific installation"""
         if installation_id in self._installation_tokens:
             cached_data = self._installation_tokens[installation_id]
-            if datetime.now() < cached_data['expires_at']:
+            if datetime.now(timezone.utc) < cached_data['expires_at']:
                 return cached_data['token']
         
         return self._get_installation_token(installation_id)
@@ -166,6 +166,8 @@ class SmartGitHubAuthService:
         - owner/repo: Find installation for specific repo
         - org: Find installation for specific org
         - webhook_payload: Extract installation from webhook
+        - username: For user-related queries
+        - search_query: For search queries
         """
         # If installation_id is provided, use it
         if 'installation_id' in context:
@@ -188,8 +190,23 @@ class SmartGitHubAuthService:
             installation = self.get_installation_for_org(context['org'])
             if installation:
                 return self.get_installation_headers(str(installation['id']))
+            else:
+                # If specific org installation not found, try using any available installation
+                # This allows queries to work even if the app isn't installed on the specific org
+                installations = self.get_all_installations()
+                if installations and len(installations) > 0:
+                    installation_id = str(installations[0]['id'])
+                    return self.get_installation_headers(installation_id)
         
-        # Fallback to app-level authentication
+        # For user queries or search queries, try to use any available installation
+        if 'username' in context or 'search_query' in context:
+            installations = self.get_all_installations()
+            if installations and len(installations) > 0:
+                # Use the first available installation for user/search queries
+                installation_id = str(installations[0]['id'])
+                return self.get_installation_headers(installation_id)
+        
+        # Fallback to app-level authentication (may not work for all GraphQL queries)
         return self.get_app_level_headers()
     
     def test_app_auth(self) -> Dict[str, Any]:

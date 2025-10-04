@@ -165,6 +165,8 @@ class GitHubSmartAuthService:
             logger.error(f"Failed to get repository contents {owner}/{repo}/{path}: {e}")
             return {
                 "success": False,
+                "path": path,
+                "contents": None,
                 "error": str(e),
                 "message": f"Failed to get repository contents {owner}/{repo}/{path}"
             }
