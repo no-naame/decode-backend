@@ -10,12 +10,18 @@ alembic==1.13.1
 
 # HTTP Client
 httpx==0.26.0
+requests==2.31.0
 
 # CORS
 python-multipart==0.0.6
 
 # Environment
 python-dotenv==1.0.0
+
+# GitHub authentication dependencies
+PyJWT==2.8.0
+PyGithub==1.59.1
+cryptography==41.0.7
 
 # Optional: Redis for caching (uncomment if using Redis)
 # redis==5.0.1

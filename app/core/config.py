@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -18,6 +18,12 @@ class Settings(BaseSettings):
 
     # GitHub API (for future integration)
     GITHUB_TOKEN: str = ""
+    
+    # GitHub App Authentication
+    GITHUB_APP_ID: Optional[str] = None
+    GITHUB_APP_SLUG: Optional[str] = None  # Your GitHub App slug/name
+    GITHUB_PRIVATE_KEY: Optional[str] = None
+    GITHUB_INSTALLATION_ID: Optional[str] = None
 
     # Redis (for caching, if needed)
     REDIS_URL: str = "redis://localhost:6379"
