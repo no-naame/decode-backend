@@ -4,8 +4,15 @@ from app.modules.sentiment_analysis.routes import router as sentiment_router
 from app.modules.burnout_risk_detection.routes import router as burnout_router
 from app.modules.shareable_contribution_profile.routes import router as profile_router
 from app.modules.github_smart_auth.routes import router as github_smart_auth_router
+from app.modules.data_collection.routes import router as data_collection_router
 
 api_router = APIRouter()
+
+# Include data collection router (core functionality)
+api_router.include_router(
+    data_collection_router,
+    tags=["Data Collection"]
+)
 
 # Include all module routers
 api_router.include_router(
