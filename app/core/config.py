@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8000,https://decode-frontend-silk.vercel.app"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8000,https://decode-frontend-silk.vercel.app,https://www.foozi.fun/"
 
     # Database
     DATABASE_URL: str = "sqlite:///./maintainers_dashboard.db"
