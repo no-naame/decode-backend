@@ -244,13 +244,24 @@
                     <h2>📊 Repository Data Collection</h2>
                     <p>Collect and store all GitHub data for invisible labor tracking</p>
                     
+                    <div class="input-group">
+                        <label>🔍 Search Repositories:</label>
+                        <input type="text" id="repoSearchInput" placeholder="Search by repository name, description, or language..." 
+                               style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;"
+                               onkeyup="filterRepositories()">
+                    </div>
+                    
                     <div class="button-group">
                         <button class="btn" onclick="loadRepositoriesForCollection()">🔄 Load My Repositories</button>
                         <button class="btn btn-secondary" onclick="listCollectedRepositories()">📁 View Collected Data</button>
+                        <button class="btn btn-warning" onclick="clearSearch()">🗑️ Clear Search</button>
                     </div>
                     
                     <div id="repositoryList" style="display: none; margin-top: 20px;">
                         <h3>Select a Repository to Collect Data</h3>
+                        <div id="searchInfo" style="margin-bottom: 10px; padding: 10px; background: #f7fafc; border-radius: 6px; display: none;">
+                            <span id="searchResultsCount" style="color: #667eea; font-weight: 600;"></span>
+                        </div>
                         <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e1e5e9; border-radius: 8px; padding: 10px;">
                             <div id="repoListContainer"></div>
                         </div>
@@ -894,49 +905,77 @@
         
         let selectedRepository = null;
         let repositories = [];
+        let filteredRepositories = [];
 
         async function loadRepositoriesForCollection() {
             showLoading();
             try {
+                console.log('Loading repositories...');
                 const response = await fetch(`${API_BASE}/api/v1/github-smart-auth/repositories`);
+                console.log('Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (response.ok && data.success) {
                     repositories = data.repositories || [];
-                    displayRepositoryList(repositories);
+                    console.log('Repositories loaded:', repositories.length);
+                    filteredRepositories = [...repositories]; // Initialize filtered list
+                    displayRepositoryList(filteredRepositories);
                     document.getElementById('repositoryList').style.display = 'block';
-                    showResult(`✅ Loaded ${repositories.length} repositories`, 'success');
+                    updateSearchInfo();
+                    showResult(`✅ Loaded ${repositories.length} repositories from your accessible accounts`, 'success');
                 } else {
+                    console.error('API Error:', data);
                     showResult(`❌ ERROR: ${JSON.stringify(data, null, 2)}`, 'error');
                 }
             } catch (error) {
+                console.error('Network Error:', error);
                 showResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
             }
             hideLoading();
         }
 
         function displayRepositoryList(repos) {
+            console.log('Displaying repositories:', repos.length);
             const container = document.getElementById('repoListContainer');
+            console.log('Container element:', container);
             
             if (repos.length === 0) {
-                container.innerHTML = '<p style="padding: 20px; text-align: center; color: #718096;">No repositories found. Make sure your GitHub App is installed.</p>';
+                const searchTerm = document.getElementById('repoSearchInput').value.trim();
+                if (searchTerm) {
+                    container.innerHTML = '<p style="padding: 20px; text-align: center; color: #718096;">No repositories found matching your search. Try a different search term.</p>';
+                } else {
+                    container.innerHTML = '<p style="padding: 20px; text-align: center; color: #718096;">No repositories found. Make sure your GitHub App is installed and you have access to repositories.</p>';
+                }
                 return;
             }
 
-            container.innerHTML = repos.map(repo => `
-                <div style="border: 2px solid #e1e5e9; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s;" 
-                     onmouseover="this.style.borderColor='#667eea'; this.style.background='#f7fafc';"
-                     onmouseout="this.style.borderColor='#e1e5e9'; this.style.background='white';"
-                     onclick="selectRepositoryForCollection('${repo.full_name}')">
-                    <h4 style="margin-bottom: 5px; color: #2d3748;">${repo.name}</h4>
-                    <p style="margin-bottom: 10px; color: #718096; font-size: 0.9rem;">${repo.description || 'No description'}</p>
-                    <div style="display: flex; gap: 15px; color: #a0aec0; font-size: 0.85rem;">
-                        <span>⭐ ${repo.stargazers_count || 0}</span>
-                        <span>🍴 ${repo.forks_count || 0}</span>
-                        <span>📝 ${repo.language || 'N/A'}</span>
+            container.innerHTML = repos.map(repo => {
+                const [owner, name] = repo.full_name.split('/');
+                return `
+                    <div style="border: 2px solid #e1e5e9; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s;" 
+                         onmouseover="this.style.borderColor='#667eea'; this.style.background='#f7fafc';"
+                         onmouseout="this.style.borderColor='#e1e5e9'; this.style.background='white';"
+                         onclick="selectRepositoryForCollection('${repo.full_name}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <h4 style="margin: 0; color: #2d3748; font-size: 1.1rem;">${name}</h4>
+                            <span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                                ${owner}
+                            </span>
+                        </div>
+                        <p style="margin-bottom: 10px; color: #718096; font-size: 0.9rem; line-height: 1.4;">
+                            ${repo.description || 'No description available'}
+                        </p>
+                        <div style="display: flex; gap: 15px; color: #a0aec0; font-size: 0.85rem; flex-wrap: wrap;">
+                            <span>⭐ ${repo.stargazers_count || 0} stars</span>
+                            <span>🍴 ${repo.forks_count || 0} forks</span>
+                            <span>📝 ${repo.language || 'N/A'}</span>
+                            <span>🔒 ${repo.private ? 'Private' : 'Public'}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function selectRepositoryForCollection(fullName) {
@@ -957,6 +996,54 @@
             document.getElementById('collectionForm').scrollIntoView({ behavior: 'smooth' });
             
             showResult(`✅ Selected repository: ${selectedRepository.full_name}`, 'success');
+        }
+
+        // ==================== SEARCH FUNCTIONS ====================
+        
+        function filterRepositories() {
+            const searchTerm = document.getElementById('repoSearchInput').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                // Show all repositories if search is empty
+                filteredRepositories = [...repositories];
+            } else {
+                // Filter repositories based on search term
+                filteredRepositories = repositories.filter(repo => {
+                    const name = (repo.name || '').toLowerCase();
+                    const description = (repo.description || '').toLowerCase();
+                    const language = (repo.language || '').toLowerCase();
+                    const fullName = (repo.full_name || '').toLowerCase();
+                    
+                    return name.includes(searchTerm) || 
+                           description.includes(searchTerm) || 
+                           language.includes(searchTerm) ||
+                           fullName.includes(searchTerm);
+                });
+            }
+            
+            displayRepositoryList(filteredRepositories);
+            updateSearchInfo();
+        }
+        
+        function updateSearchInfo() {
+            const searchInfo = document.getElementById('searchInfo');
+            const searchResultsCount = document.getElementById('searchResultsCount');
+            const searchTerm = document.getElementById('repoSearchInput').value.trim();
+            
+            if (searchTerm) {
+                searchInfo.style.display = 'block';
+                searchResultsCount.textContent = `Found ${filteredRepositories.length} of ${repositories.length} repositories matching "${searchTerm}"`;
+            } else {
+                searchInfo.style.display = 'none';
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('repoSearchInput').value = '';
+            filteredRepositories = [...repositories];
+            displayRepositoryList(filteredRepositories);
+            updateSearchInfo();
+            showResult('✅ Search cleared - showing all repositories', 'success');
         }
 
         async function startDataCollection() {
@@ -1050,6 +1137,14 @@
             document.getElementById('statReviews').textContent = stats.pr_reviews || 0;
             document.getElementById('statComments').textContent = (stats.pr_review_comments || 0) + (stats.issue_comments || 0);
             document.getElementById('statCommits').textContent = stats.commits || 0;
+            
+            // Display errors if any
+            if (stats.errors && stats.errors.length > 0) {
+                logCollection(`⚠️  ${stats.errors.length} ERRORS OCCURRED DURING COLLECTION:`, 'warning');
+                stats.errors.forEach((error, idx) => {
+                    logCollection(`   ${idx + 1}. ${error}`, 'error');
+                });
+            }
             
             // Scroll to stats
             document.getElementById('collectionStats').scrollIntoView({ behavior: 'smooth', block: 'nearest' });

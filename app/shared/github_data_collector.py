@@ -170,75 +170,182 @@ class GitHubDataCollector:
 
             # 2. Fetch and store issues (last 30 days)
             print(f"🐛 Fetching issues...")
-            issues_data = await self._fetch_issues(owner, repo, since_iso)
-            for issue_data in issues_data:
-                await self._store_issue(db, repository.id, issue_data)
-                stats["issues"] += 1
-            print(f"✅ Stored {stats['issues']} issues")
+            try:
+                issues_data = await self._fetch_issues(owner, repo, since_iso)
+                print(f"   Found {len(issues_data)} issues to process")
+                for issue_data in issues_data:
+                    try:
+                        await self._store_issue(db, repository.id, issue_data)
+                        stats["issues"] += 1
+                    except Exception as e:
+                        error_msg = f"Failed to store issue #{issue_data.get('number', 'unknown')}: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
+                print(f"✅ Stored {stats['issues']} issues")
+            except Exception as e:
+                error_msg = f"Failed to fetch issues: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
+                import traceback
+                traceback.print_exc()
 
             # 3. Fetch and store pull requests (last 30 days)
             print(f"🔀 Fetching pull requests...")
-            prs_data = await self._fetch_pull_requests(owner, repo, since_iso)
-            for pr_data in prs_data:
-                pr = await self._store_pull_request(db, repository.id, pr_data)
-                stats["pull_requests"] += 1
+            try:
+                prs_data = await self._fetch_pull_requests(owner, repo, since_iso)
+                print(f"   Found {len(prs_data)} pull requests to process")
+                for pr_data in prs_data:
+                    try:
+                        pr = await self._store_pull_request(db, repository.id, pr_data)
+                        stats["pull_requests"] += 1
+                        
+                        # Fetch PR reviews
+                        try:
+                            reviews = await self._fetch_pr_reviews(owner, repo, pr_data['number'])
+                            for review_data in reviews:
+                                try:
+                                    await self._store_pr_review(db, pr.id, review_data)
+                                    stats["pr_reviews"] += 1
+                                except Exception as e:
+                                    error_msg = f"Failed to store review for PR #{pr_data['number']}: {str(e)}"
+                                    print(f"   ⚠️  {error_msg}")
+                                    stats["errors"].append(error_msg)
+                        except Exception as e:
+                            error_msg = f"Failed to fetch reviews for PR #{pr_data['number']}: {str(e)}"
+                            print(f"   ⚠️  {error_msg}")
+                            stats["errors"].append(error_msg)
+                        
+                        # Fetch PR review comments
+                        try:
+                            review_comments = await self._fetch_pr_review_comments(owner, repo, pr_data['number'])
+                            for comment_data in review_comments:
+                                try:
+                                    await self._store_pr_review_comment(db, pr.id, comment_data)
+                                    stats["pr_review_comments"] += 1
+                                except Exception as e:
+                                    error_msg = f"Failed to store review comment for PR #{pr_data['number']}: {str(e)}"
+                                    print(f"   ⚠️  {error_msg}")
+                                    stats["errors"].append(error_msg)
+                        except Exception as e:
+                            error_msg = f"Failed to fetch review comments for PR #{pr_data['number']}: {str(e)}"
+                            print(f"   ⚠️  {error_msg}")
+                            stats["errors"].append(error_msg)
+                    except Exception as e:
+                        error_msg = f"Failed to store PR #{pr_data.get('number', 'unknown')}: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
                 
-                # Fetch PR reviews
-                reviews = await self._fetch_pr_reviews(owner, repo, pr_data['number'])
-                for review_data in reviews:
-                    await self._store_pr_review(db, pr.id, review_data)
-                    stats["pr_reviews"] += 1
-                
-                # Fetch PR review comments
-                review_comments = await self._fetch_pr_review_comments(owner, repo, pr_data['number'])
-                for comment_data in review_comments:
-                    await self._store_pr_review_comment(db, pr.id, comment_data)
-                    stats["pr_review_comments"] += 1
-            
-            print(f"✅ Stored {stats['pull_requests']} pull requests, {stats['pr_reviews']} reviews, {stats['pr_review_comments']} review comments")
+                print(f"✅ Stored {stats['pull_requests']} pull requests, {stats['pr_reviews']} reviews, {stats['pr_review_comments']} review comments")
+            except Exception as e:
+                error_msg = f"Failed to fetch pull requests: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
+                import traceback
+                traceback.print_exc()
 
             # 4. Fetch issue comments
             print(f"💬 Fetching issue comments...")
-            for issue_data in issues_data:
-                issue = db.query(Issue).filter(Issue.github_id == issue_data['id']).first()
-                if issue and issue_data.get('comments', 0) > 0:
-                    comments = await self._fetch_issue_comments(owner, repo, issue_data['number'])
-                    for comment_data in comments:
-                        await self._store_issue_comment(db, issue.id, comment_data)
-                        stats["issue_comments"] += 1
-            print(f"✅ Stored {stats['issue_comments']} issue comments")
+            try:
+                for issue_data in issues_data:
+                    try:
+                        issue = db.query(Issue).filter(Issue.github_id == issue_data['id']).first()
+                        if issue and issue_data.get('comments', 0) > 0:
+                            comments = await self._fetch_issue_comments(owner, repo, issue_data['number'])
+                            for comment_data in comments:
+                                try:
+                                    await self._store_issue_comment(db, issue.id, comment_data)
+                                    stats["issue_comments"] += 1
+                                except Exception as e:
+                                    error_msg = f"Failed to store comment for issue #{issue_data['number']}: {str(e)}"
+                                    print(f"   ⚠️  {error_msg}")
+                                    stats["errors"].append(error_msg)
+                    except Exception as e:
+                        error_msg = f"Failed to fetch comments for issue #{issue_data.get('number', 'unknown')}: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
+                print(f"✅ Stored {stats['issue_comments']} issue comments")
+            except Exception as e:
+                error_msg = f"Failed to process issue comments: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
 
             # 5. Fetch issue timeline events
             print(f"📅 Fetching issue timeline events...")
-            for issue_data in issues_data:
-                issue = db.query(Issue).filter(Issue.github_id == issue_data['id']).first()
-                if issue:
-                    timeline = await self._fetch_issue_timeline(owner, repo, issue_data['number'])
-                    for event_data in timeline:
-                        await self._store_timeline_event(db, issue.id, event_data)
-                        stats["issue_timeline_events"] += 1
-            print(f"✅ Stored {stats['issue_timeline_events']} timeline events")
+            try:
+                for issue_data in issues_data:
+                    try:
+                        issue = db.query(Issue).filter(Issue.github_id == issue_data['id']).first()
+                        if issue:
+                            timeline = await self._fetch_issue_timeline(owner, repo, issue_data['number'])
+                            for event_data in timeline:
+                                try:
+                                    await self._store_timeline_event(db, issue.id, event_data)
+                                    stats["issue_timeline_events"] += 1
+                                except Exception as e:
+                                    error_msg = f"Failed to store timeline event for issue #{issue_data['number']}: {str(e)}"
+                                    print(f"   ⚠️  {error_msg}")
+                                    stats["errors"].append(error_msg)
+                    except Exception as e:
+                        error_msg = f"Failed to fetch timeline for issue #{issue_data.get('number', 'unknown')}: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
+                print(f"✅ Stored {stats['issue_timeline_events']} timeline events")
+            except Exception as e:
+                error_msg = f"Failed to process timeline events: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
 
             # 6. Fetch discussions (GraphQL)
             print(f"💭 Fetching discussions...")
-            discussions_data = await self._fetch_discussions(owner, repo)
-            for discussion_data in discussions_data:
-                discussion = await self._store_discussion(db, repository.id, discussion_data)
-                stats["discussions"] += 1
-                
-                # Store discussion comments
-                for comment_data in discussion_data.get('comments', {}).get('nodes', []):
-                    await self._store_discussion_comment(db, discussion.id, comment_data)
-                    stats["discussion_comments"] += 1
-            print(f"✅ Stored {stats['discussions']} discussions, {stats['discussion_comments']} discussion comments")
+            try:
+                discussions_data = await self._fetch_discussions(owner, repo)
+                print(f"   Found {len(discussions_data)} discussions to process")
+                for discussion_data in discussions_data:
+                    try:
+                        discussion = await self._store_discussion(db, repository.id, discussion_data)
+                        stats["discussions"] += 1
+                        
+                        # Store discussion comments
+                        for comment_data in discussion_data.get('comments', {}).get('nodes', []):
+                            try:
+                                await self._store_discussion_comment(db, discussion.id, comment_data)
+                                stats["discussion_comments"] += 1
+                            except Exception as e:
+                                error_msg = f"Failed to store discussion comment: {str(e)}"
+                                print(f"   ⚠️  {error_msg}")
+                                stats["errors"].append(error_msg)
+                    except Exception as e:
+                        error_msg = f"Failed to store discussion: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
+                print(f"✅ Stored {stats['discussions']} discussions, {stats['discussion_comments']} discussion comments")
+            except Exception as e:
+                error_msg = f"Failed to fetch discussions: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
+                import traceback
+                traceback.print_exc()
 
             # 7. Fetch commits (last 30 days)
             print(f"📝 Fetching commits...")
-            commits_data = await self._fetch_commits(owner, repo, since_iso)
-            for commit_data in commits_data:
-                await self._store_commit(db, repository.id, commit_data)
-                stats["commits"] += 1
-            print(f"✅ Stored {stats['commits']} commits")
+            try:
+                commits_data = await self._fetch_commits(owner, repo, since_iso)
+                print(f"   Found {len(commits_data)} commits to process")
+                for commit_data in commits_data:
+                    try:
+                        await self._store_commit(db, repository.id, commit_data)
+                        stats["commits"] += 1
+                    except Exception as e:
+                        error_msg = f"Failed to store commit {commit_data.get('sha', 'unknown')}: {str(e)}"
+                        print(f"   ⚠️  {error_msg}")
+                        stats["errors"].append(error_msg)
+                print(f"✅ Stored {stats['commits']} commits")
+            except Exception as e:
+                error_msg = f"Failed to fetch commits: {str(e)}"
+                print(f"❌ {error_msg}")
+                stats["errors"].append(error_msg)
+                import traceback
+                traceback.print_exc()
 
             # Count unique maintainers
             stats["maintainers"] = db.query(Maintainer).count()
@@ -284,10 +391,29 @@ class GitHubDataCollector:
         return repository
 
     async def _fetch_issues(self, owner: str, repo: str, since: str) -> List[Dict]:
-        """Fetch issues created since date."""
+        """Fetch issues created since date with pagination."""
         try:
-            params = {"state": "all", "since": since, "per_page": 100}
-            return await self._rest_request("GET", f"repos/{owner}/{repo}/issues", owner=owner, repo=repo, params=params)
+            all_issues = []
+            page = 1
+            per_page = 100
+            
+            while True:
+                params = {"state": "all", "since": since, "per_page": per_page, "page": page}
+                issues = await self._rest_request("GET", f"repos/{owner}/{repo}/issues", owner=owner, repo=repo, params=params)
+                
+                if not issues:
+                    break
+                
+                all_issues.extend(issues)
+                
+                if len(issues) < per_page:
+                    break
+                
+                page += 1
+                if page > 50:
+                    break
+            
+            return all_issues
         except Exception as e:
             print(f"Error fetching issues: {e}")
             return []
@@ -329,16 +455,36 @@ class GitHubDataCollector:
         return issue
 
     async def _fetch_pull_requests(self, owner: str, repo: str, since: str) -> List[Dict]:
-        """Fetch pull requests created since date."""
+        """Fetch pull requests created since date with pagination."""
         try:
-            # Fetch all PRs and filter by date
-            params = {"state": "all", "per_page": 100, "sort": "created", "direction": "desc"}
-            prs = await self._rest_request("GET", f"repos/{owner}/{repo}/pulls", owner=owner, repo=repo, params=params)
-            
-            # Filter by date
+            all_prs = []
+            page = 1
+            per_page = 100
             since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
-            filtered_prs = [pr for pr in prs if datetime.fromisoformat(pr['created_at'].replace('Z', '+00:00')) >= since_dt]
-            return filtered_prs
+            
+            while True:
+                params = {"state": "all", "per_page": per_page, "page": page, "sort": "created", "direction": "desc"}
+                prs = await self._rest_request("GET", f"repos/{owner}/{repo}/pulls", owner=owner, repo=repo, params=params)
+                
+                if not prs:
+                    break
+                
+                # Filter by date and add to results
+                filtered_prs = [pr for pr in prs if datetime.fromisoformat(pr['created_at'].replace('Z', '+00:00')) >= since_dt]
+                all_prs.extend(filtered_prs)
+                
+                # If we got PRs older than since_dt, we can stop
+                if len(filtered_prs) < len(prs):
+                    break
+                
+                if len(prs) < per_page:
+                    break
+                
+                page += 1
+                if page > 50:
+                    break
+            
+            return all_prs
         except Exception as e:
             print(f"Error fetching pull requests: {e}")
             return []
@@ -591,9 +737,13 @@ class GitHubDataCollector:
             """
             variables = {"owner": owner, "repo": repo}
             result = await self._graphql_request(query, variables, owner=owner, repo=repo)
-            return result.get('data', {}).get('repository', {}).get('discussions', {}).get('nodes', [])
+            discussions = result.get('data', {}).get('repository', {}).get('discussions', {}).get('nodes', [])
+            print(f"   GraphQL returned {len(discussions)} discussions")
+            return discussions
         except Exception as e:
-            print(f"Error fetching discussions: {e}")
+            print(f"❌ Error fetching discussions: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     async def _store_discussion(self, db: Session, repository_id: int, discussion_data: Dict) -> Discussion:
@@ -649,12 +799,39 @@ class GitHubDataCollector:
         return comment
 
     async def _fetch_commits(self, owner: str, repo: str, since: str) -> List[Dict]:
-        """Fetch commits since date."""
+        """Fetch commits since date with pagination."""
         try:
-            params = {"since": since, "per_page": 100}
-            return await self._rest_request("GET", f"repos/{owner}/{repo}/commits", owner=owner, repo=repo, params=params)
+            all_commits = []
+            page = 1
+            per_page = 100
+            
+            while True:
+                params = {"since": since, "per_page": per_page, "page": page}
+                commits = await self._rest_request("GET", f"repos/{owner}/{repo}/commits", owner=owner, repo=repo, params=params)
+                
+                if not commits:
+                    break
+                
+                all_commits.extend(commits)
+                print(f"  Fetched page {page}: {len(commits)} commits")
+                
+                # If we got fewer than per_page commits, we've reached the end
+                if len(commits) < per_page:
+                    break
+                
+                page += 1
+                
+                # Safety check
+                if page > 50:
+                    print(f"  Warning: Reached max pages (50) for commits")
+                    break
+            
+            print(f"  Total commits fetched: {len(all_commits)}")
+            return all_commits
         except Exception as e:
             print(f"Error fetching commits: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     async def _store_commit(self, db: Session, repository_id: int, commit_data: Dict) -> Commit:

@@ -59,8 +59,13 @@ class GitHubSmartAuthService:
             
             # Use the headers to make GitHub API call
             if 'token' in headers.get('Authorization', ''):
-                # Installation-level call
-                response = requests.get('https://api.github.com/installation/repositories', headers=headers)
+                # Installation-level call with pagination
+                all_repos = self._get_all_repos_paginated('https://api.github.com/installation/repositories', headers)
+                return {
+                    "success": True,
+                    "count": len(all_repos),
+                    "repositories": all_repos
+                }
             else:
                 # App-level call - get all installations and their repos
                 installations = self.auth_service.get_all_installations()
@@ -69,27 +74,17 @@ class GitHubSmartAuthService:
                 for installation in installations:
                     inst_id = installation['id']
                     inst_headers = self.auth_service.get_installation_headers(str(inst_id))
-                    inst_response = requests.get('https://api.github.com/installation/repositories', headers=inst_headers)
-                    if inst_response.status_code == 200:
-                        repos = inst_response.json().get('repositories', [])
-                        for repo in repos:
-                            repo['installation_id'] = inst_id
-                        all_repos.extend(repos)
+                    # Get all repos for this installation with pagination
+                    repos = self._get_all_repos_paginated('https://api.github.com/installation/repositories', inst_headers)
+                    for repo in repos:
+                        repo['installation_id'] = inst_id
+                    all_repos.extend(repos)
                 
                 return {
                     "success": True,
                     "count": len(all_repos),
                     "repositories": all_repos
                 }
-            
-            response.raise_for_status()
-            repos = response.json().get('repositories', [])
-            
-            return {
-                "success": True,
-                "count": len(repos),
-                "repositories": repos
-            }
         except Exception as e:
             logger.error(f"Failed to get repositories: {e}")
             return {
@@ -97,6 +92,45 @@ class GitHubSmartAuthService:
                 "error": str(e),
                 "message": "Failed to get repositories"
             }
+    
+    def _get_all_repos_paginated(self, url: str, headers: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Fetch all repositories with pagination support"""
+        all_repos = []
+        page = 1
+        per_page = 100  # Maximum allowed by GitHub API
+        
+        while True:
+            # Add pagination parameters
+            paginated_url = f"{url}?per_page={per_page}&page={page}"
+            response = requests.get(paginated_url, headers=headers)
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch repositories page {page}: {response.status_code}")
+                break
+            
+            data = response.json()
+            repos = data.get('repositories', [])
+            
+            if not repos:
+                break
+            
+            all_repos.extend(repos)
+            
+            # Check if there are more pages
+            # GitHub's installation/repositories endpoint returns a 'repositories' array
+            # If we get fewer than per_page results, we've reached the end
+            if len(repos) < per_page:
+                break
+            
+            page += 1
+            
+            # Safety check to prevent infinite loops
+            if page > 100:
+                logger.warning(f"Reached maximum page limit (100) while fetching repositories")
+                break
+        
+        logger.info(f"Fetched {len(all_repos)} repositories across {page} pages")
+        return all_repos
     
     def get_repository(self, owner: str, repo: str, installation_id: Optional[str] = None) -> Dict[str, Any]:
         """Get repository details - automatically finds the right installation"""
