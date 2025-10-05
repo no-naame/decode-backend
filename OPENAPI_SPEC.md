@@ -1,1107 +1,870 @@
-# OpenAPI Specification for Maintainer Dashboard Backend
+# Complete OpenAPI Specification - All Fields Required by Frontend
 
 ## Overview
 
-Complete OpenAPI specification with schemas/models for FastAPI backend implementation. All response types are in JSON format.
+This specification includes EVERY field needed by the frontend, including those currently being generated locally. The backend should populate ALL these fields.
 
-## Base Configuration
+## Endpoint
 
-```yaml
-openapi: 3.1.0
-info:
-  title: Maintainer Dashboard API
-  version: 1.0.0
-  description: API for tracking invisible labor, sentiment analysis, and OSS maintainer metrics
-servers:
-  - url: http://localhost:8000/api
-    description: Development server
-  - url: https://api.maintainer-dashboard.com
-    description: Production server
-```
+### GET /api/v1/dashboard/{username}
 
-## Authentication
+**Path Parameters:**
 
-```yaml
-security:
-  - BearerAuth: []
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-```
-
-## Core Schemas/Models
-
-### 1. User & Authentication
-
-#### User Model
-
-```json
-{
-  "id": "string",
-  "username": "string",
-  "email": "string",
-  "name": "string",
-  "avatar": "string (url)",
-  "bio": "string",
-  "joinedDate": "string (ISO 8601)",
-  "githubId": "string",
-  "role": "maintainer | contributor | admin",
-  "createdAt": "string (ISO 8601)",
-  "updatedAt": "string (ISO 8601)"
-}
-```
-
-#### Session Model
-
-```json
-{
-  "id": "string",
-  "userId": "string",
-  "token": "string (JWT)",
-  "expiresAt": "string (ISO 8601)",
-  "createdAt": "string (ISO 8601)"
-}
-```
-
-### 2. Maintainer Metrics
-
-#### MaintainerMetrics Model
-
-```json
-{
-  "invisibleLaborScore": 847,
-  "reviewImpactScore": 92,
-  "communityEngagement": 78,
-  "burnoutRisk": 42,
-  "sentimentScore": 73,
-  "totalRepositories": 8,
-  "responseTime": 4.2,
-  "totalContributions": 1247,
-  "mentorshipHours": 156,
-  "weeklyActivity": [
-    {
-      "date": "2024-03-20",
-      "reviews": 15,
-      "triage": 20,
-      "mentorship": 10,
-      "documentation": 8,
-      "discussions": 12,
-      "total": 65
-    }
-  ],
-  "sentimentTrend": [
-    {
-      "date": "2024-03-20",
-      "value": 73,
-      "label": "Positive"
-    }
-  ],
-  "activityDistribution": [
-    {
-      "category": "Code Reviews",
-      "value": 35,
-      "percentage": 35,
-      "color": "#6366f1"
-    }
-  ]
-}
-```
-
-#### ActivityData Model
-
-```json
-{
-  "date": "string (YYYY-MM-DD)",
-  "reviews": "integer",
-  "triage": "integer",
-  "mentorship": "integer",
-  "documentation": "integer",
-  "discussions": "integer",
-  "total": "integer"
-}
-```
-
-#### TrendData Model
-
-```json
-{
-  "date": "string (YYYY-MM-DD)",
-  "value": "number",
-  "label": "string (optional)"
-}
-```
-
-#### CategoryData Model
-
-```json
-{
-  "category": "string",
-  "value": "number",
-  "percentage": "number",
-  "color": "string (hex)"
-}
-```
-
-### 3. Repository Health
-
-#### RepositoryHealth Model
-
-```json
-{
-  "id": "string",
-  "name": "string",
-  "healthScore": 85,
-  "contributors": 234,
-  "activeContributors": 42,
-  "issuesResolved": 156,
-  "issuesOpen": 23,
-  "prsMerged": 89,
-  "prsOpen": 12,
-  "lastActivity": "2 hours ago",
-  "responseTime": 3.5,
-  "sentiment": "positive | neutral | negative",
-  "stars": 3420,
-  "forks": 567
-}
-```
-
-### 4. Community Metrics
-
-#### CommunityMetric Model
-
-```json
-{
-  "thankYouMessages": 234,
-  "helpedContributors": 156,
-  "mentorshipSessions": 42,
-  "conflictsResolved": 8,
-  "documentationImproved": 23,
-  "communityGrowth": 28
-}
-```
-
-### 5. Burnout Indicators
-
-#### BurnoutIndicator Model
-
-```json
-{
-  "riskScore": 42,
-  "riskLevel": "low | medium | high | critical",
-  "indicators": {
-    "workload": 65,
-    "responseTime": 45,
-    "sentimentDrop": 30,
-    "activitySpikes": 55,
-    "weekendWork": 40
-  },
-  "recommendations": [
-    "Consider delegating code review responsibilities for 1-2 repositories",
-    "Set specific 'no-code' hours to maintain work-life balance",
-    "Take a 2-day break from non-critical issues",
-    "Enable auto-response for weekends",
-    "Schedule regular breaks between intense review sessions"
-  ],
-  "recoveryMetrics": {
-    "daysOff": 3,
-    "delegatedTasks": 12,
-    "reducedScope": 20
-  }
-}
-```
-
-### 6. Contribution Profile
-
-#### ContributionProfile Model
-
-```json
-{
-  "name": "string",
-  "username": "string",
-  "avatar": "string (url)",
-  "bio": "string",
-  "joinedDate": "string (YYYY-MM-DD)",
-  "achievements": [
-    {
-      "id": "string",
-      "title": "string",
-      "description": "string",
-      "icon": "string",
-      "level": "bronze | silver | gold | platinum",
-      "earnedDate": "string (YYYY-MM-DD)",
-      "category": "string"
-    }
-  ],
-  "skills": [
-    {
-      "skill": "string",
-      "score": "number",
-      "maxScore": 100,
-      "category": "technical | soft | leadership"
-    }
-  ],
-  "testimonials": [
-    {
-      "id": "string",
-      "author": "string",
-      "avatar": "string (url)",
-      "content": "string",
-      "date": "string (YYYY-MM-DD)",
-      "repository": "string"
-    }
-  ],
-  "impactSummary": {
-    "totalReviews": 1247,
-    "issuesTriaged": 892,
-    "contributorsHelped": 156,
-    "documentationPages": 45,
-    "communityImpact": 94,
-    "timeInvested": 1560
-  },
-  "topRepositories": [
-    {
-      "repository": "string",
-      "role": "string",
-      "contributions": "integer",
-      "impact": "high | medium | low",
-      "duration": "string"
-    }
-  ]
-}
-```
-
-### 7. Timeline Events
-
-#### TimelineEvent Model
-
-```json
-{
-  "id": "string",
-  "timestamp": "string (ISO 8601)",
-  "type": "review | triage | mentorship | documentation | discussion | release",
-  "title": "string",
-  "description": "string",
-  "repository": "string",
-  "impact": "integer (0-100)",
-  "linkedPR": "string (optional)",
-  "linkedIssue": "string (optional)"
-}
-```
-
-### 8. Sentiment Analysis
-
-#### SentimentAnalysis Model
-
-```json
-{
-  "score": 73,
-  "trend": "improving | stable | declining",
-  "wordFrequency": [
-    {
-      "word": "helpful",
-      "count": 45,
-      "sentiment": "positive | negative | neutral"
-    }
-  ],
-  "feedbackDistribution": {
-    "constructive": 45,
-    "appreciative": 38,
-    "critical": 12,
-    "neutral": 5
-  },
-  "topPositiveFeedback": [
-    "Your reviews are always thorough and educational",
-    "Thank you for taking the time to explain the concepts"
-  ],
-  "concernAreas": [
-    "Response times during weekends",
-    "Some PRs take longer to review"
-  ]
-}
-```
-
-## API Endpoints
-
-### Dashboard Overview
-
-#### GET /api/dashboard/overview
+- `username`: string (GitHub username)
 
 **Response:** `200 OK`
 
 ```json
 {
   "metrics": {
-    /* MaintainerMetrics */
-  },
-  "alerts": [
-    {
-      "id": "string",
-      "type": "warning | info | critical",
-      "title": "string",
-      "message": "string",
-      "timestamp": "ISO 8601"
-    }
-  ],
-  "recentActivity": [
-    /* TimelineEvent[] */
-  ]
-}
-```
-
-### Maintainer Endpoints
-
-#### GET /api/maintainer
-
-**Query Parameters:**
-
-- `search`: string (optional)
-- `page`: integer (default: 1)
-- `limit`: integer (default: 20)
-- `sortBy`: string (score | activity | sentiment)
-
-**Response:** `200 OK`
-
-```json
-{
-  "maintainers": [
-    {
-      "id": "string",
-      "username": "string",
-      "name": "string",
-      "avatar": "string",
-      "invisibleLaborScore": 847,
-      "sentiment": "positive",
-      "lastActive": "ISO 8601"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 100,
-    "hasMore": true
-  }
-}
-```
-
-#### GET /api/maintainer/{id}
-
-**Response:** `200 OK`
-
-```json
-{
-  "profile": {
-    /* ContributionProfile */
-  },
-  "metrics": {
-    /* MaintainerMetrics */
-  },
-  "repositories": [
-    /* RepositoryHealth[] */
-  ]
-}
-```
-
-#### GET /api/maintainer/{id}/activity
-
-**Query Parameters:**
-
-- `startDate`: string (YYYY-MM-DD)
-- `endDate`: string (YYYY-MM-DD)
-- `type`: string (review | triage | mentorship | documentation | discussion)
-- `limit`: integer
-
-**Response:** `200 OK`
-
-```json
-{
-  "activities": [
-    /* TimelineEvent[] */
-  ],
-  "summary": {
-    "totalActivities": 250,
-    "timeRange": {
-      "start": "2024-01-01",
-      "end": "2024-03-31"
-    },
-    "breakdown": {
-      "reviews": 100,
-      "triage": 50,
-      "mentorship": 40,
-      "documentation": 30,
-      "discussions": 30
-    }
-  }
-}
-```
-
-#### GET /api/maintainer/{id}/sentiment
-
-**Response:** `200 OK`
-
-```json
-{
-  "analysis": {
-    /* SentimentAnalysis */
-  },
-  "history": [
-    {
-      "date": "2024-03-01",
-      "score": 75,
-      "feedback": ["string"]
-    }
-  ]
-}
-```
-
-#### GET /api/maintainer/{id}/cv
-
-**Response:** `200 OK`
-
-```json
-{
-  "profile": {
-    /* ContributionProfile */
-  },
-  "shareableUrl": "https://maintainer-dashboard.com/cv/username",
-  "ogMetadata": {
-    "title": "string",
-    "description": "string",
-    "image": "string (url)"
-  }
-}
-```
-
-### Repository Health Endpoints
-
-#### GET /api/repositories
-
-**Response:** `200 OK`
-
-```json
-{
-  "repositories": [
-    /* RepositoryHealth[] */
-  ],
-  "summary": {
-    "totalRepositories": 8,
-    "healthyCount": 4,
-    "needsAttentionCount": 3,
-    "criticalCount": 1,
-    "totalContributors": 234
-  }
-}
-```
-
-#### GET /api/repositories/{id}/health
-
-**Response:** `200 OK`
-
-```json
-{
-  "repository": {
-    /* RepositoryHealth */
-  },
-  "trends": {
-    "contributorGrowth": [
-      /* TrendData[] */
-    ],
-    "issueResolution": [
-      /* TrendData[] */
-    ],
-    "prVelocity": [
-      /* TrendData[] */
-    ]
-  },
-  "topContributors": [
-    {
-      "id": "string",
-      "username": "string",
-      "avatar": "string",
-      "contributions": 45
-    }
-  ]
-}
-```
-
-### Burnout Assessment Endpoints
-
-#### GET /api/burnout/assessment
-
-**Response:** `200 OK`
-
-```json
-{
-  "indicator": {
-    /* BurnoutIndicator */
-  },
-  "trends": {
-    "workload": [
-      /* TrendData[] */
-    ],
-    "responseTime": [
-      /* TrendData[] */
-    ],
-    "sentiment": [
-      /* TrendData[] */
-    ]
-  },
-  "warnings": [
-    {
-      "sign": "string",
-      "status": "ok | warning | alert",
-      "description": "string"
-    }
-  ]
-}
-```
-
-#### POST /api/burnout/recommendations
-
-**Request Body:**
-
-```json
-{
-  "maintainerId": "string",
-  "indicators": {
-    /* partial BurnoutIndicator */
-  }
-}
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "recommendations": ["string"],
-  "priority": "low | medium | high | critical",
-  "suggestedActions": [
-    {
-      "action": "string",
-      "impact": "high | medium | low",
-      "effort": "low | medium | high"
-    }
-  ]
-}
-```
-
-### Timeline & Activity Endpoints
-
-#### GET /api/timeline
-
-**Query Parameters:**
-
-- `startDate`: string
-- `endDate`: string
-- `type`: string (optional)
-- `repository`: string (optional)
-
-**Response:** `200 OK`
-
-```json
-{
-  "events": [
-    /* TimelineEvent[] */
-  ],
-  "summary": {
-    "totalEvents": 150,
-    "impactScore": 847,
-    "mostActiveRepository": "string",
-    "peakActivity": {
-      "date": "2024-03-25",
-      "count": 25
-    }
-  }
-}
-```
-
-#### GET /api/timeline/hourly
-
-**Query Parameters:**
-
-- `date`: string (YYYY-MM-DD)
-
-**Response:** `200 OK`
-
-```json
-{
-  "hourlyActivity": [
-    {
-      "hour": 0,
-      "reviews": 2,
-      "triage": 5,
-      "mentorship": 1,
-      "documentation": 0,
-      "discussions": 3
-    }
-  ],
-  "peak": {
-    "hour": 14,
-    "total": 25
-  }
-}
-```
-
-### Community Metrics Endpoints
-
-#### GET /api/community/metrics
-
-**Response:** `200 OK`
-
-```json
-{
-  "metrics": {
-    /* CommunityMetric */
-  },
-  "trends": {
-    "growth": [
-      /* TrendData[] */
-    ],
-    "engagement": [
-      /* TrendData[] */
-    ],
-    "satisfaction": [
-      /* TrendData[] */
-    ]
-  }
-}
-```
-
-### Charts & Visualizations Data
-
-#### GET /api/charts/activity-distribution
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    /* CategoryData[] */
-  ],
-  "total": 100,
-  "period": "7d | 30d | 90d | 1y"
-}
-```
-
-#### GET /api/charts/weekly-activity
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    /* ActivityData[] */
-  ],
-  "summary": {
-    "totalActivities": 250,
-    "averagePerDay": 35.7,
-    "mostActiveDay": "Monday",
-    "trend": "increasing | stable | decreasing"
-  }
-}
-```
-
-#### GET /api/charts/sentiment-trend
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    /* TrendData[] */
-  ],
-  "currentScore": 73,
-  "trend": "improving | stable | declining",
-  "averageScore": 68.5
-}
-```
-
-#### GET /api/charts/heatmap
-
-**Query Parameters:**
-
-- `startDate`: string
-- `endDate`: string
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "day": "Monday",
-      "hour": "14:00",
-      "intensity": 85
-    }
-  ],
-  "peakTimes": [
-    {
-      "day": "string",
-      "hour": "string",
-      "intensity": "number"
-    }
-  ]
-}
-```
-
-#### GET /api/charts/radar-skills
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "skill": "Code Review",
-      "value": 95,
-      "fullMark": 100
-    }
-  ],
-  "categories": ["technical", "soft", "leadership"]
-}
-```
-
-### Export & PDF Generation
-
-#### POST /api/export/pdf
-
-**Request Body:**
-
-```json
-{
-  "url": "string",
-  "filename": "string",
-  "options": {
-    "format": "A4 | Letter",
-    "landscape": false,
-    "margins": {
-      "top": "20px",
-      "bottom": "20px",
-      "left": "20px",
-      "right": "20px"
-    }
-  }
-}
-```
-
-**Response:** `200 OK`
-
-```
-Content-Type: application/pdf
-[Binary PDF Data]
-```
-
-### Milestone Celebrations (Future)
-
-#### GET /api/milestones
-
-**Response:** `200 OK`
-
-```json
-{
-  "milestones": [
-    {
-      "id": "string",
-      "type": "stars | prs | anniversary | contributors | release",
-      "title": "1000 Stars Reached!",
-      "description": "string",
-      "achievedDate": "ISO 8601",
-      "repository": "string",
-      "value": 1000,
-      "celebrationUrl": "string"
-    }
-  ]
-}
-```
-
-#### POST /api/milestones/{id}/generate-post
-
-**Request Body:**
-
-```json
-{
-  "platform": "linkedin | twitter",
-  "template": "string (optional)"
-}
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "post": {
-    "text": "string",
-    "hashtags": ["#opensource", "#milestone"],
-    "image": "string (url)",
-    "shareUrl": "string"
-  }
-}
-```
-
-### Project Discovery (Future)
-
-#### GET /api/projects/search
-
-**Query Parameters:**
-
-- `q`: string (search query)
-- `language`: string[]
-- `healthScore`: integer (min)
-- `stars`: integer (min)
-- `activity`: string (active | moderate | low)
-- `compatibility`: string[]
-
-**Response:** `200 OK`
-
-```json
-{
-  "projects": [
-    {
-      "id": "string",
-      "name": "string",
-      "description": "string",
-      "language": "string",
-      "healthScore": 85,
-      "stars": 5000,
-      "forks": 500,
-      "contributors": 100,
-      "lastActivity": "ISO 8601",
-      "tags": ["string"],
-      "compatibility": ["beginner-friendly", "good-first-issues"]
-    }
-  ],
-  "facets": {
-    "languages": { "JavaScript": 45, "TypeScript": 30 },
-    "healthScores": { "80-100": 20, "60-79": 35 },
-    "activity": { "active": 50, "moderate": 30 }
-  },
-  "total": 250
-}
-```
-
-#### GET /api/projects/{id}
-
-**Response:** `200 OK`
-
-```json
-{
-  "project": {
-    "id": "string",
-    "name": "string",
-    "fullName": "owner/repo",
-    "description": "string",
-    "readme": "string (markdown)",
-    "language": "string",
-    "languages": { "JavaScript": 60, "TypeScript": 40 },
-    "topics": ["string"],
-    "healthScore": 85,
-    "stats": {
-      "stars": 5000,
-      "forks": 500,
-      "watchers": 200,
-      "openIssues": 45,
-      "openPRs": 12
-    },
-    "activity": {
-      "lastCommit": "ISO 8601",
-      "lastRelease": "ISO 8601",
-      "commitsPerWeek": [15, 20, 18, 22, 25, 30, 28]
-    },
-    "maintainers": [
+    "invisibleLaborScore": 21,
+    "reviewImpactScore": 52,
+    "communityEngagement": 95,
+    "burnoutRisk": 62,
+    "sentimentScore": 73,
+    "totalRepositories": 1,
+    "responseTime": 4.5,
+    "totalContributions": 103,
+    "mentorshipHours": 0,
+    "weeklyActivity": [
       {
-        "username": "string",
-        "avatar": "string",
-        "role": "string"
+        "date": "2025-09-07",
+        "reviews": 5,
+        "triage": 8,
+        "mentorship": 3,
+        "documentation": 2,
+        "discussions": 4,
+        "total": 22
       }
     ],
-    "contributionGuide": "string (url)",
-    "codeOfConduct": "string (url)"
-  }
-}
-```
-
-## Error Responses
-
-### Standard Error Format
-
-```json
-{
-  "error": {
-    "code": "string",
-    "message": "string",
-    "details": {
-      "field": "string",
-      "reason": "string"
+    "sentimentTrend": [
+      {
+        "date": "2025-09-07",
+        "value": 70,
+        "label": "Positive"
+      }
+    ],
+    "activityDistribution": [
+      {
+        "category": "Code Reviews",
+        "value": 18,
+        "percentage": 17.647058823529413,
+        "color": "#6366f1"
+      },
+      {
+        "category": "Issue Triage",
+        "value": 50,
+        "percentage": 49.01960784313725,
+        "color": "#8b5cf6"
+      },
+      {
+        "category": "Mentorship",
+        "value": 0,
+        "percentage": 0,
+        "color": "#ec4899"
+      },
+      {
+        "category": "Community Support",
+        "value": 30,
+        "percentage": 29.411764705882355,
+        "color": "#f59e0b"
+      },
+      {
+        "category": "Documentation",
+        "value": 4,
+        "percentage": 3.9215686274509802,
+        "color": "#10b981"
+      }
+    ]
+  },
+  "burnout": {
+    "riskScore": 62,
+    "riskLevel": "high",
+    "indicators": {
+      "workload": 34,
+      "responseTime": 100,
+      "sentimentDrop": 27,
+      "activitySpikes": 34,
+      "weekendWork": 65
     },
-    "timestamp": "ISO 8601"
-  }
-}
-```
-
-### Common Error Codes
-
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `422` - Validation Error
-- `429` - Rate Limited
-- `500` - Internal Server Error
-
-## Rate Limiting
-
-```json
-{
-  "X-RateLimit-Limit": "1000",
-  "X-RateLimit-Remaining": "999",
-  "X-RateLimit-Reset": "1625097600"
-}
-```
-
-## Pagination
-
-Standard pagination format for all list endpoints:
-
-```json
-{
-  "data": [],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 100,
-    "totalPages": 5,
-    "hasNext": true,
-    "hasPrev": false
-  }
-}
-```
-
-## WebSocket Events (Real-time)
-
-### Connection
-
-```json
-{
-  "event": "connect",
-  "data": {
-    "sessionId": "string",
-    "userId": "string"
-  }
-}
-```
-
-### Activity Update
-
-```json
-{
-  "event": "activity.update",
-  "data": {
-    "type": "review | triage | mentorship",
-    "activity": {
-      /* TimelineEvent */
+    "recommendations": [
+      "Reduce daily code reviews from current load by 30%",
+      "Set specific no-code hours (6PM-9AM) in settings"
+    ],
+    "recoveryMetrics": {
+      "daysOff": 0,
+      "delegatedTasks": 0,
+      "reducedScope": 0
+    },
+    "trends": {
+      "responseTime": [
+        {
+          "date": "2025-09-01",
+          "value": 4.2
+        },
+        {
+          "date": "2025-09-02",
+          "value": 4.5
+        }
+      ],
+      "activityLevel": [
+        {
+          "date": "2025-09-01",
+          "value": 65
+        },
+        {
+          "date": "2025-09-02",
+          "value": 68
+        }
+      ],
+      "sentiment": [
+        {
+          "date": "2025-09-01",
+          "value": 73
+        },
+        {
+          "date": "2025-09-02",
+          "value": 75
+        }
+      ]
     }
-  }
-}
-```
-
-### Sentiment Change
-
-```json
-{
-  "event": "sentiment.change",
-  "data": {
-    "previousScore": 70,
-    "currentScore": 75,
-    "trend": "improving"
-  }
-}
-```
-
-### Burnout Alert
-
-```json
-{
-  "event": "burnout.alert",
-  "data": {
-    "level": "warning | critical",
-    "indicator": {
-      /* BurnoutIndicator */
+  },
+  "sentiment": {
+    "score": 73,
+    "trend": "stable",
+    "wordFrequency": [
+      {
+        "word": "helpful",
+        "count": 45,
+        "sentiment": "positive"
+      }
+    ],
+    "feedbackDistribution": {
+      "constructive": 45,
+      "appreciative": 38,
+      "critical": 12,
+      "neutral": 5
     },
-    "recommendation": "string"
+    "topPositiveFeedback": ["Reviews provide clear, actionable feedback"],
+    "concernAreas": [
+      "Review tone generally good with room for more positive reinforcement"
+    ],
+    "multiLineTrend": {
+      "overall": [
+        {
+          "date": "2025-08-01",
+          "value": 70
+        },
+        {
+          "date": "2025-08-02",
+          "value": 71
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2025-08-01",
+          "value": 72
+        },
+        {
+          "date": "2025-08-02",
+          "value": 73
+        }
+      ],
+      "discussions": [
+        {
+          "date": "2025-08-01",
+          "value": 68
+        },
+        {
+          "date": "2025-08-02",
+          "value": 69
+        }
+      ]
+    }
+  },
+  "communityMetrics": {
+    "thankYouMessages": 30,
+    "helpedContributors": 0,
+    "mentorshipSessions": 0,
+    "conflictsResolved": 2,
+    "documentationImproved": 4,
+    "communityGrowth": 28
+  },
+  "profile": {
+    "name": "Sarah Maintainer",
+    "username": "sarah_maintainer",
+    "avatar": "https://github.com/sarah_maintainer.png",
+    "bio": "Open source maintainer focused on code quality and community growth",
+    "joinedDate": "2024-10-05",
+    "achievements": [],
+    "skills": [
+      {
+        "skill": "Code Review",
+        "score": 52,
+        "maxScore": 100,
+        "category": "technical"
+      }
+    ],
+    "testimonials": [],
+    "impactSummary": {
+      "totalReviews": 18,
+      "issuesTriaged": 50,
+      "contributorsHelped": 50,
+      "documentationPages": 10,
+      "communityImpact": 95,
+      "timeInvested": 0
+    },
+    "topRepositories": [
+      {
+        "repository": "example/main-project",
+        "role": "Core Maintainer",
+        "contributions": 103,
+        "impact": "high",
+        "duration": "6 months"
+      }
+    ],
+    "skillsRadar": [
+      {
+        "skill": "Code Review",
+        "value": 95,
+        "fullMark": 100
+      },
+      {
+        "skill": "Issue Triage",
+        "value": 88,
+        "fullMark": 100
+      },
+      {
+        "skill": "Mentorship",
+        "value": 92,
+        "fullMark": 100
+      },
+      {
+        "skill": "Documentation",
+        "value": 78,
+        "fullMark": 100
+      },
+      {
+        "skill": "Conflict Resolution",
+        "value": 85,
+        "fullMark": 100
+      },
+      {
+        "skill": "Community Building",
+        "value": 90,
+        "fullMark": 100
+      }
+    ]
+  },
+  "alerts": [],
+  "recentActivity": [
+    {
+      "id": "e0",
+      "timestamp": "2025-10-05T00:12:19.539969Z",
+      "type": "triage",
+      "title": "Issue Triaged",
+      "description": "Added label: bug",
+      "repository": "example/repo",
+      "impact": 60,
+      "linkedPR": null,
+      "linkedIssue": "0"
+    }
+  ],
+  "repositoryHealth": [
+    {
+      "id": "repo1",
+      "name": "example/main-project",
+      "healthScore": 85,
+      "contributors": 234,
+      "activeContributors": 42,
+      "issuesResolved": 16,
+      "issuesOpen": 20,
+      "prsMerged": 0,
+      "prsOpen": 0,
+      "lastActivity": "2 hours ago",
+      "responseTime": 3.5,
+      "sentiment": "positive",
+      "stars": 3420,
+      "forks": 567
+    }
+  ],
+  "analytics": {
+    "activityHeatmap": [
+      {
+        "day": "Monday",
+        "hour": 0,
+        "intensity": 45
+      },
+      {
+        "day": "Monday",
+        "hour": 1,
+        "intensity": 12
+      },
+      {
+        "day": "Monday",
+        "hour": 14,
+        "intensity": 85
+      }
+    ],
+    "contributorGrowth": {
+      "total": [
+        {
+          "date": "2025-09-01",
+          "value": 150
+        },
+        {
+          "date": "2025-09-02",
+          "value": 152
+        }
+      ],
+      "new": [
+        {
+          "date": "2025-09-01",
+          "value": 5
+        },
+        {
+          "date": "2025-09-02",
+          "value": 6
+        }
+      ],
+      "returning": [
+        {
+          "date": "2025-09-01",
+          "value": 120
+        },
+        {
+          "date": "2025-09-02",
+          "value": 122
+        }
+      ]
+    },
+    "issueResolutionFunnel": [
+      {
+        "stage": "Created",
+        "count": 234,
+        "percentage": 100
+      },
+      {
+        "stage": "Triaged",
+        "count": 198,
+        "percentage": 85
+      },
+      {
+        "stage": "Assigned",
+        "count": 156,
+        "percentage": 67
+      },
+      {
+        "stage": "In Progress",
+        "count": 112,
+        "percentage": 48
+      },
+      {
+        "stage": "Resolved",
+        "count": 98,
+        "percentage": 42
+      }
+    ],
+    "impactTimeline": [
+      {
+        "date": "2025-03-25",
+        "type": "review",
+        "title": "Security Fix Review",
+        "impact": 95,
+        "responses": 12,
+        "color": "blue-500"
+      },
+      {
+        "date": "2025-03-20",
+        "type": "mentorship",
+        "title": "Onboarded 5 New Contributors",
+        "impact": 85,
+        "responses": 8,
+        "color": "purple-500"
+      },
+      {
+        "date": "2025-03-15",
+        "type": "triage",
+        "title": "Organized 50+ Issues for v2.0",
+        "impact": 78,
+        "responses": 5,
+        "color": "emerald-500"
+      },
+      {
+        "date": "2025-03-10",
+        "type": "documentation",
+        "title": "Rewrote API Documentation",
+        "impact": 72,
+        "responses": 15,
+        "color": "amber-500"
+      }
+    ],
+    "cumulativeLabor": [
+      {
+        "date": "2025-09-01",
+        "reviews": 5,
+        "triage": 8,
+        "mentorship": 3,
+        "documentation": 2,
+        "discussions": 4
+      },
+      {
+        "date": "2025-09-02",
+        "reviews": 12,
+        "triage": 16,
+        "mentorship": 7,
+        "documentation": 4,
+        "discussions": 9
+      }
+    ]
   }
 }
 ```
 
-## FastAPI Implementation Notes
+## NEW FIELDS TO ADD (Currently Generated in Frontend)
 
-### Model Definitions
+### 1. `burnout.trends` Object
 
-```python
-from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
-from datetime import datetime
+**Location:** `app/dashboard/burnout/page.tsx` - `generateBurnoutTrends()`
 
-class MaintainerMetrics(BaseModel):
-    invisible_labor_score: int = Field(..., ge=0, le=1000)
-    review_impact_score: int = Field(..., ge=0, le=100)
-    community_engagement: int = Field(..., ge=0, le=100)
-    burnout_risk: int = Field(..., ge=0, le=100)
-    sentiment_score: int = Field(..., ge=0, le=100)
-    total_repositories: int = Field(..., ge=0)
-    response_time: float = Field(..., ge=0)
-    total_contributions: int = Field(..., ge=0)
-    mentorship_hours: int = Field(..., ge=0)
-    weekly_activity: List[ActivityData]
-    sentiment_trend: List[TrendData]
-    activity_distribution: List[CategoryData]
+```typescript
+"trends": {
+  "responseTime": [{"date": "YYYY-MM-DD", "value": number}],  // 30 days
+  "activityLevel": [{"date": "YYYY-MM-DD", "value": number}], // 30 days
+  "sentiment": [{"date": "YYYY-MM-DD", "value": number}]      // 30 days
+}
 ```
 
-### Cache Strategy
+### 2. `sentiment.multiLineTrend` Object
 
-- Static data: 5 minutes
-- User profiles: 1 minute
-- Real-time data: No cache
-- Charts: 30 seconds
+**Location:** `app/dashboard/sentiment/page.tsx` - `generateMultiLineSentiment()`
 
-### Database Schema
-
-- PostgreSQL for structured data
-- Redis for caching
-- TimescaleDB for time-series data
-- Elasticsearch for search functionality
-
-### Authentication Flow
-
-1. OAuth with GitHub
-2. JWT tokens with refresh
-3. Session storage in Redis
-4. Rate limiting per user
-
-## Testing
-
-### Example cURL Requests
-
-```bash
-# Get dashboard overview
-curl -X GET "http://localhost:8000/api/dashboard/overview" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Get maintainer profile
-curl -X GET "http://localhost:8000/api/maintainer/alexchen" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Export PDF
-curl -X POST "http://localhost:8000/api/export/pdf" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "http://localhost:3000/dashboard",
-    "filename": "dashboard-export"
-  }'
+```typescript
+"multiLineTrend": {
+  "overall": [{"date": "YYYY-MM-DD", "value": number}],     // 90 days
+  "reviews": [{"date": "YYYY-MM-DD", "value": number}],     // 90 days
+  "discussions": [{"date": "YYYY-MM-DD", "value": number}]  // 90 days
+}
 ```
 
----
+### 3. `profile.skillsRadar` Array
 
-This specification provides a complete blueprint for implementing the FastAPI backend with all necessary models, endpoints, and response formats for the maintainer dashboard application.
+**Location:** `app/dashboard/invisible-labor/page.tsx` - `radarData`
+
+```typescript
+"skillsRadar": [
+  {
+    "skill": "Code Review",
+    "value": 95,      // 0-100
+    "fullMark": 100
+  },
+  {
+    "skill": "Issue Triage",
+    "value": 88,
+    "fullMark": 100
+  },
+  {
+    "skill": "Mentorship",
+    "value": 92,
+    "fullMark": 100
+  },
+  {
+    "skill": "Documentation",
+    "value": 78,
+    "fullMark": 100
+  },
+  {
+    "skill": "Conflict Resolution",
+    "value": 85,
+    "fullMark": 100
+  },
+  {
+    "skill": "Community Building",
+    "value": 90,
+    "fullMark": 100
+  }
+]
+```
+
+### 4. `analytics` Object (NEW TOP-LEVEL FIELD)
+
+#### 4.1 `analytics.activityHeatmap` Array
+
+**Location:** `app/dashboard/invisible-labor/page.tsx` - `heatMapData`
+
+```typescript
+"activityHeatmap": [
+  {
+    "day": "Monday",  // or "Tuesday", "Wednesday", etc.
+    "hour": 0,        // 0-23
+    "intensity": 45   // 0-100
+  }
+  // 168 entries total (7 days × 24 hours)
+]
+```
+
+#### 4.2 `analytics.contributorGrowth` Object
+
+**Location:** `app/dashboard/repositories/page.tsx` - `generateContributorGrowth()`
+
+```typescript
+"contributorGrowth": {
+  "total": [
+    {"date": "YYYY-MM-DD", "value": 150}  // 30 days
+  ],
+  "new": [
+    {"date": "YYYY-MM-DD", "value": 5}    // 30 days
+  ],
+  "returning": [
+    {"date": "YYYY-MM-DD", "value": 120}  // 30 days
+  ]
+}
+```
+
+#### 4.3 `analytics.issueResolutionFunnel` Array
+
+**Location:** `app/dashboard/repositories/page.tsx` - `issueResolutionData`
+
+```typescript
+"issueResolutionFunnel": [
+  {
+    "stage": "Created",
+    "count": 234,
+    "percentage": 100
+  },
+  {
+    "stage": "Triaged",
+    "count": 198,
+    "percentage": 85
+  },
+  {
+    "stage": "Assigned",
+    "count": 156,
+    "percentage": 67
+  },
+  {
+    "stage": "In Progress",
+    "count": 112,
+    "percentage": 48
+  },
+  {
+    "stage": "Resolved",
+    "count": 98,
+    "percentage": 42
+  }
+]
+```
+
+#### 4.4 `analytics.impactTimeline` Array
+
+**Location:** `app/dashboard/invisible-labor/page.tsx` - hardcoded events
+
+```typescript
+"impactTimeline": [
+  {
+    "date": "2025-03-25",
+    "type": "review",        // or "mentorship", "triage", "documentation"
+    "title": "Security Fix Review",
+    "impact": 95,            // 0-100
+    "responses": 12,
+    "color": "blue-500"      // Tailwind color class
+  }
+]
+```
+
+#### 4.5 `analytics.cumulativeLabor` Array
+
+**Location:** `app/dashboard/invisible-labor/page.tsx` - uses `metrics.weeklyActivity` but needs cumulative
+
+```typescript
+"cumulativeLabor": [
+  {
+    "date": "YYYY-MM-DD",
+    "reviews": 5,
+    "triage": 8,
+    "mentorship": 3,
+    "documentation": 2,
+    "discussions": 4
+  }
+  // 30 days of cumulative data
+]
+```
+
+## Complete TypeScript Interface
+
+```typescript
+interface DashboardResponse {
+  metrics: {
+    invisibleLaborScore: number;
+    reviewImpactScore: number;
+    communityEngagement: number;
+    burnoutRisk: number;
+    sentimentScore: number;
+    totalRepositories: number;
+    responseTime: number;
+    totalContributions: number;
+    mentorshipHours: number;
+    weeklyActivity: Array<{
+      date: string;
+      reviews: number;
+      triage: number;
+      mentorship: number;
+      documentation: number;
+      discussions: number;
+      total: number;
+    }>;
+    sentimentTrend: Array<{
+      date: string;
+      value: number;
+      label: string;
+    }>;
+    activityDistribution: Array<{
+      category: string;
+      value: number;
+      percentage: number;
+      color: string;
+    }>;
+  };
+  burnout: {
+    riskScore: number;
+    riskLevel: "low" | "medium" | "high" | "critical";
+    indicators: {
+      workload: number;
+      responseTime: number;
+      sentimentDrop: number;
+      activitySpikes: number;
+      weekendWork: number;
+    };
+    recommendations: string[];
+    recoveryMetrics: {
+      daysOff: number;
+      delegatedTasks: number;
+      reducedScope: number;
+    };
+    trends: {
+      responseTime: Array<{ date: string; value: number }>;
+      activityLevel: Array<{ date: string; value: number }>;
+      sentiment: Array<{ date: string; value: number }>;
+    };
+  };
+  sentiment: {
+    score: number;
+    trend: "improving" | "stable" | "declining";
+    wordFrequency: Array<{
+      word: string;
+      count: number;
+      sentiment: "positive" | "negative" | "neutral";
+    }>;
+    feedbackDistribution: {
+      constructive: number;
+      appreciative: number;
+      critical: number;
+      neutral: number;
+    };
+    topPositiveFeedback: string[];
+    concernAreas: string[];
+    multiLineTrend: {
+      overall: Array<{ date: string; value: number }>;
+      reviews: Array<{ date: string; value: number }>;
+      discussions: Array<{ date: string; value: number }>;
+    };
+  };
+  communityMetrics: {
+    thankYouMessages: number;
+    helpedContributors: number;
+    mentorshipSessions: number;
+    conflictsResolved: number;
+    documentationImproved: number;
+    communityGrowth: number;
+  };
+  profile: {
+    name: string;
+    username: string;
+    avatar: string;
+    bio: string;
+    joinedDate: string;
+    achievements: Array<{
+      id: string;
+      title: string;
+      description: string;
+      icon: string;
+      level: "bronze" | "silver" | "gold" | "platinum";
+      earnedDate: string;
+      category: string;
+    }>;
+    skills: Array<{
+      skill: string;
+      score: number;
+      maxScore: number;
+      category: "technical" | "soft" | "leadership";
+    }>;
+    testimonials: Array<{
+      id: string;
+      author: string;
+      avatar: string;
+      content: string;
+      date: string;
+      repository: string;
+    }>;
+    impactSummary: {
+      totalReviews: number;
+      issuesTriaged: number;
+      contributorsHelped: number;
+      documentationPages: number;
+      communityImpact: number;
+      timeInvested: number;
+    };
+    topRepositories: Array<{
+      repository: string;
+      role: string;
+      contributions: number;
+      impact: "high" | "medium" | "low";
+      duration: string;
+    }>;
+    skillsRadar: Array<{
+      skill: string;
+      value: number;
+      fullMark: number;
+    }>;
+  };
+  alerts: Array<{
+    id: string;
+    type: "info" | "warning" | "critical";
+    title: string;
+    message: string;
+    timestamp: string;
+  }>;
+  recentActivity: Array<{
+    id: string;
+    timestamp: string;
+    type:
+      | "review"
+      | "triage"
+      | "mentorship"
+      | "documentation"
+      | "discussion"
+      | "release";
+    title: string;
+    description: string;
+    repository: string;
+    impact: number;
+    linkedPR: string | null;
+    linkedIssue: string | null;
+  }>;
+  repositoryHealth: Array<{
+    id: string;
+    name: string;
+    healthScore: number;
+    contributors: number;
+    activeContributors: number;
+    issuesResolved: number;
+    issuesOpen: number;
+    prsMerged: number;
+    prsOpen: number;
+    lastActivity: string;
+    responseTime: number;
+    sentiment: "positive" | "neutral" | "negative";
+    stars: number;
+    forks: number;
+  }>;
+  analytics: {
+    activityHeatmap: Array<{
+      day: string;
+      hour: number;
+      intensity: number;
+    }>;
+    contributorGrowth: {
+      total: Array<{ date: string; value: number }>;
+      new: Array<{ date: string; value: number }>;
+      returning: Array<{ date: string; value: number }>;
+    };
+    issueResolutionFunnel: Array<{
+      stage: string;
+      count: number;
+      percentage: number;
+    }>;
+    impactTimeline: Array<{
+      date: string;
+      type: string;
+      title: string;
+      impact: number;
+      responses: number;
+      color: string;
+    }>;
+    cumulativeLabor: Array<{
+      date: string;
+      reviews: number;
+      triage: number;
+      mentorship: number;
+      documentation: number;
+      discussions: number;
+    }>;
+  };
+}
+```
+
+## Summary of Missing Fields
+
+### Currently in API ✓
+
+- metrics (all fields)
+- burnout (core fields)
+- sentiment (core fields)
+- communityMetrics
+- profile (core fields)
+- alerts
+- recentActivity
+- repositoryHealth
+
+### NEED TO ADD ❌
+
+1. **burnout.trends** - 30-day trend data for 3 metrics
+2. **sentiment.multiLineTrend** - 90-day sentiment evolution
+3. **profile.skillsRadar** - 6 skill assessments for radar chart
+4. **analytics** - NEW top-level object with:
+   - **activityHeatmap** - 7 days × 24 hours = 168 data points
+   - **contributorGrowth** - 30-day trends for 3 metrics
+   - **issueResolutionFunnel** - 5-stage funnel data
+   - **impactTimeline** - Major contribution events
+   - **cumulativeLabor** - 30-day cumulative activity
+
+## Data Generation Guidelines
+
+### Time Ranges
+
+- **weeklyActivity**: Last 7 days (or 4 weeks as shown in your response)
+- **sentimentTrend**: Last 30 days
+- **burnout.trends**: Last 30 days
+- **sentiment.multiLineTrend**: Last 90 days
+- **activityHeatmap**: Last 7 days
+- **contributorGrowth**: Last 30 days
+- **cumulativeLabor**: Last 30 days
+
+### Date Format
+
+- Use `YYYY-MM-DD` format for all dates
+- Use ISO 8601 for timestamps: `YYYY-MM-DDTHH:mm:ss.SSSZ`
+
+### Skill Categories
+
+Use these exact skill names for `skillsRadar`:
+
+1. "Code Review"
+2. "Issue Triage"
+3. "Mentorship"
+4. "Documentation"
+5. "Conflict Resolution"
+6. "Community Building"
+
+### Activity Types
+
+- "review"
+- "triage"
+- "mentorship"
+- "documentation"
+- "discussion"
+- "release"
+
+### Days of Week
+
+- "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"

@@ -66,6 +66,13 @@ class RecoveryMetrics(BaseModel):
     reducedScope: int
 
 
+class BurnoutTrends(BaseModel):
+    """Burnout trend data over time"""
+    responseTime: List[TrendData]
+    activityLevel: List[TrendData]
+    sentiment: List[TrendData]
+
+
 class BurnoutIndicator(BaseModel):
     """Burnout risk assessment"""
     riskScore: int = Field(..., ge=0, le=100)
@@ -73,6 +80,7 @@ class BurnoutIndicator(BaseModel):
     indicators: BurnoutIndicators
     recommendations: List[str]
     recoveryMetrics: RecoveryMetrics
+    trends: BurnoutTrends
 
 
 class Achievement(BaseModel):
@@ -123,6 +131,13 @@ class TopRepository(BaseModel):
     duration: str
 
 
+class SkillRadar(BaseModel):
+    """Skill data for radar chart"""
+    skill: str
+    value: float = Field(..., ge=0, le=100)
+    fullMark: int = 100
+
+
 class ContributionProfile(BaseModel):
     """Shareable contribution profile"""
     name: str
@@ -135,6 +150,7 @@ class ContributionProfile(BaseModel):
     testimonials: List[Testimonial]
     impactSummary: ImpactSummary
     topRepositories: List[TopRepository]
+    skillsRadar: List[SkillRadar]
 
 
 class TimelineEvent(BaseModel):
@@ -165,6 +181,13 @@ class FeedbackDistribution(BaseModel):
     neutral: int
 
 
+class MultiLineTrend(BaseModel):
+    """Multi-line sentiment trend data"""
+    overall: List[TrendData]
+    reviews: List[TrendData]
+    discussions: List[TrendData]
+
+
 class SentimentAnalysis(BaseModel):
     """Sentiment analysis results"""
     score: int = Field(..., ge=0, le=100)
@@ -173,6 +196,7 @@ class SentimentAnalysis(BaseModel):
     feedbackDistribution: FeedbackDistribution
     topPositiveFeedback: List[str]
     concernAreas: List[str]
+    multiLineTrend: MultiLineTrend
 
 
 class CommunityMetric(BaseModel):
@@ -212,6 +236,58 @@ class Alert(BaseModel):
     timestamp: str = Field(..., description="ISO 8601")
 
 
+class ActivityHeatmap(BaseModel):
+    """Activity heatmap data point (GitHub-style contribution calendar)"""
+    date: str = Field(..., description="YYYY-MM-DD")
+    day: str  # Sun, Mon, Tue, Wed, Thu, Fri, Sat
+    week: int = Field(..., ge=0, le=3, description="Week number (0-3)")
+    count: int = Field(..., ge=0, description="Number of contributions")
+    level: int = Field(..., ge=0, le=4, description="Intensity level (0=none, 1-4=low to high)")
+
+
+class ContributorGrowth(BaseModel):
+    """Contributor growth tracking"""
+    total: List[TrendData]
+    new: List[TrendData]
+    returning: List[TrendData]
+
+
+class IssueResolutionFunnel(BaseModel):
+    """Issue resolution funnel stage"""
+    stage: str
+    count: int
+    percentage: float
+
+
+class ImpactTimelineEvent(BaseModel):
+    """Major impact event"""
+    date: str = Field(..., description="YYYY-MM-DD")
+    type: str  # review, mentorship, triage, documentation
+    title: str
+    impact: int = Field(..., ge=0, le=100)
+    responses: int
+    color: str  # Tailwind color class
+
+
+class CumulativeLabor(BaseModel):
+    """Cumulative labor data point"""
+    date: str = Field(..., description="YYYY-MM-DD")
+    reviews: int
+    triage: int
+    mentorship: int
+    documentation: int
+    discussions: int
+
+
+class Analytics(BaseModel):
+    """Advanced analytics data"""
+    activityHeatmap: List[ActivityHeatmap]
+    contributorGrowth: ContributorGrowth
+    issueResolutionFunnel: List[IssueResolutionFunnel]
+    impactTimeline: List[ImpactTimelineEvent]
+    cumulativeLabor: List[CumulativeLabor]
+
+
 # ============== API Response Models ==============
 
 class DashboardOverviewResponse(BaseModel):
@@ -224,3 +300,4 @@ class DashboardOverviewResponse(BaseModel):
     alerts: List[Alert]
     recentActivity: List[TimelineEvent]
     repositoryHealth: List[RepositoryHealth]
+    analytics: Analytics

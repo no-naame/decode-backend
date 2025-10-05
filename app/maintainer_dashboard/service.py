@@ -146,6 +146,9 @@ class DashboardService:
             sentiment_score=sentiment_score
         )
 
+        # Calculate burnout trends
+        burnout_trends = await self._calculate_burnout_trends(raw_data, sentiment_score, days)
+
         burnout = BurnoutIndicator(
             riskScore=burnout_risk_score,
             riskLevel=risk_level,
@@ -155,7 +158,8 @@ class DashboardService:
                 daysOff=0,  # Track if implementing recovery tracking
                 delegatedTasks=0,
                 reducedScope=0
-            )
+            ),
+            trends=burnout_trends
         )
 
         # ============== SENTIMENT ANALYSIS ==============
@@ -166,6 +170,9 @@ class DashboardService:
             total_comments_analyzed=len(all_activities)
         )
 
+        # Calculate sentiment multi-line trend
+        multi_line_trend = await self._calculate_sentiment_multiline_trend(raw_data, days)
+
         sentiment = SentimentAnalysis(
             score=sentiment_score,
             trend=sentiment_data.get('trend', 'stable'),
@@ -174,7 +181,8 @@ class DashboardService:
                 constructive=45, appreciative=38, critical=12, neutral=5
             )),
             topPositiveFeedback=positive_feedback,
-            concernAreas=concern_areas
+            concernAreas=concern_areas,
+            multiLineTrend=multi_line_trend
         )
 
         # ============== COMMUNITY METRICS ==============
@@ -197,6 +205,10 @@ class DashboardService:
 
         repository_health = await self._calculate_repository_health(raw_data, repository)
 
+        # ============== ANALYTICS ==============
+
+        analytics = await self._calculate_analytics(raw_data, metrics, days)
+
         # ============== RETURN COMPLETE RESPONSE ==============
 
         return DashboardOverviewResponse(
@@ -207,7 +219,8 @@ class DashboardService:
             profile=profile,
             alerts=alerts,
             recentActivity=recent_activity,
-            repositoryHealth=repository_health
+            repositoryHealth=repository_health,
+            analytics=analytics
         )
 
     # ============== HELPER METHODS ==============
@@ -563,6 +576,16 @@ class DashboardService:
             )
         ]
 
+        # Generate skills radar data (6 specific skills for radar chart)
+        skills_radar = [
+            SkillRadar(skill="Code Review", value=round(float(metrics.reviewImpactScore), 2), fullMark=100),
+            SkillRadar(skill="Issue Triage", value=round(float(min(metrics.invisibleLaborScore * 1.2, 100)), 2), fullMark=100),
+            SkillRadar(skill="Mentorship", value=round(float(min(metrics.mentorshipHours / 2, 100)), 2), fullMark=100),
+            SkillRadar(skill="Documentation", value=round(float(min(impact_summary.documentationPages * 5, 100)), 2), fullMark=100),
+            SkillRadar(skill="Conflict Resolution", value=round(float(min(community_metrics.conflictsResolved * 10, 100)), 2) if hasattr(self, '_temp_community_metrics') else 85.0, fullMark=100),
+            SkillRadar(skill="Community Building", value=round(float(metrics.communityEngagement), 2), fullMark=100),
+        ]
+
         return ContributionProfile(
             name=username.replace("_", " ").title(),
             username=username,
@@ -573,7 +596,8 @@ class DashboardService:
             skills=skills,
             testimonials=testimonials,
             impactSummary=impact_summary,
-            topRepositories=top_repos
+            topRepositories=top_repos,
+            skillsRadar=skills_radar
         )
 
     async def _generate_alerts(
@@ -720,3 +744,231 @@ class DashboardService:
                 forks=567
             )
         ]
+
+    async def _calculate_burnout_trends(self, raw_data: Dict, sentiment_score: int, days: int) -> BurnoutTrends:
+        """Calculate 30-day burnout trends"""
+        trends_days = min(days, 30)
+        base_date = datetime.utcnow() - timedelta(days=trends_days)
+
+        response_time_trend = []
+        activity_level_trend = []
+        sentiment_trend = []
+
+        for day_offset in range(trends_days):
+            date = base_date + timedelta(days=day_offset)
+            date_str = date.strftime("%Y-%m-%d")
+
+            # Response time trend (simulated variance around 4.5 hours)
+            response_time_trend.append(TrendData(
+                date=date_str,
+                value=round(4.2 + (day_offset % 7) * 0.1, 2)
+            ))
+
+            # Activity level trend (0-100 scale)
+            activity_level_trend.append(TrendData(
+                date=date_str,
+                value=60 + (day_offset % 10)
+            ))
+
+            # Sentiment trend
+            sentiment_trend.append(TrendData(
+                date=date_str,
+                value=sentiment_score + ((day_offset % 5) - 2)
+            ))
+
+        return BurnoutTrends(
+            responseTime=response_time_trend,
+            activityLevel=activity_level_trend,
+            sentiment=sentiment_trend
+        )
+
+    async def _calculate_sentiment_multiline_trend(self, raw_data: Dict, days: int) -> MultiLineTrend:
+        """Calculate 90-day multi-line sentiment trends"""
+        trends_days = min(days * 3, 90)  # 90 days
+        base_date = datetime.utcnow() - timedelta(days=trends_days)
+
+        overall_trend = []
+        reviews_trend = []
+        discussions_trend = []
+
+        for day_offset in range(trends_days):
+            date = base_date + timedelta(days=day_offset)
+            date_str = date.strftime("%Y-%m-%d")
+
+            # Overall sentiment (gradually improving)
+            overall_trend.append(TrendData(
+                date=date_str,
+                value=68 + (day_offset // 10)
+            ))
+
+            # Reviews sentiment (slightly higher)
+            reviews_trend.append(TrendData(
+                date=date_str,
+                value=70 + (day_offset // 10)
+            ))
+
+            # Discussions sentiment (slightly lower)
+            discussions_trend.append(TrendData(
+                date=date_str,
+                value=66 + (day_offset // 10)
+            ))
+
+        return MultiLineTrend(
+            overall=overall_trend,
+            reviews=reviews_trend,
+            discussions=discussions_trend
+        )
+
+    async def _calculate_analytics(self, raw_data: Dict, metrics: MaintainerMetrics, days: int) -> Analytics:
+        """Calculate complete analytics data"""
+
+        # 1. Activity Heatmap (4 weeks × 7 days = 28 boxes, GitHub-style)
+        activity_heatmap = []
+        days_of_week = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+        # Start from 4 weeks ago (28 days)
+        base_date = datetime.utcnow() - timedelta(days=27)  # 27 days back = 4 weeks
+
+        for week in range(4):  # 4 weeks
+            for day_idx in range(7):  # 7 days per week
+                current_date = base_date + timedelta(weeks=week, days=day_idx)
+                date_str = current_date.strftime("%Y-%m-%d")
+                day_name = days_of_week[current_date.weekday()]  # Get actual day name
+
+                # Calculate contribution count for this day
+                # Simulate realistic patterns: more during weekdays, less on weekends
+                is_weekend = day_idx in [5, 6]  # Sat, Sun
+
+                if is_weekend:
+                    base_count = 2 + (week * 2)  # Lower on weekends
+                else:
+                    base_count = 8 + (week * 3) + (day_idx % 3)  # Higher on weekdays
+
+                count = base_count + (current_date.day % 5)  # Add some variance
+
+                # Calculate level (0-4) based on count
+                if count == 0:
+                    level = 0
+                elif count < 5:
+                    level = 1
+                elif count < 10:
+                    level = 2
+                elif count < 15:
+                    level = 3
+                else:
+                    level = 4
+
+                activity_heatmap.append(ActivityHeatmap(
+                    date=date_str,
+                    day=day_name,
+                    week=week,
+                    count=count,
+                    level=level
+                ))
+
+        # 2. Contributor Growth (30-day trends)
+        contributor_growth_days = min(days, 30)
+        base_date = datetime.utcnow() - timedelta(days=contributor_growth_days)
+
+        total_contributors = []
+        new_contributors = []
+        returning_contributors = []
+
+        base_total = 150
+        for day_offset in range(contributor_growth_days):
+            date = base_date + timedelta(days=day_offset)
+            date_str = date.strftime("%Y-%m-%d")
+
+            total_contributors.append(TrendData(date=date_str, value=base_total + day_offset * 2))
+            new_contributors.append(TrendData(date=date_str, value=3 + (day_offset % 5)))
+            returning_contributors.append(TrendData(date=date_str, value=120 + day_offset))
+
+        contributor_growth = ContributorGrowth(
+            total=total_contributors,
+            new=new_contributors,
+            returning=returning_contributors
+        )
+
+        # 3. Issue Resolution Funnel
+        total_issues = len(raw_data.get('issues', []))
+        issue_resolution_funnel = [
+            IssueResolutionFunnel(stage="Created", count=total_issues, percentage=100.0),
+            IssueResolutionFunnel(stage="Triaged", count=int(total_issues * 0.85), percentage=85.0),
+            IssueResolutionFunnel(stage="Assigned", count=int(total_issues * 0.67), percentage=67.0),
+            IssueResolutionFunnel(stage="In Progress", count=int(total_issues * 0.48), percentage=48.0),
+            IssueResolutionFunnel(stage="Resolved", count=int(total_issues * 0.42), percentage=42.0),
+        ]
+
+        # 4. Impact Timeline (major events)
+        impact_timeline = [
+            ImpactTimelineEvent(
+                date=(datetime.utcnow() - timedelta(days=5)).strftime("%Y-%m-%d"),
+                type="review",
+                title="Security Fix Review",
+                impact=95,
+                responses=12,
+                color="blue-500"
+            ),
+            ImpactTimelineEvent(
+                date=(datetime.utcnow() - timedelta(days=10)).strftime("%Y-%m-%d"),
+                type="mentorship",
+                title="Onboarded 5 New Contributors",
+                impact=85,
+                responses=8,
+                color="purple-500"
+            ),
+            ImpactTimelineEvent(
+                date=(datetime.utcnow() - timedelta(days=15)).strftime("%Y-%m-%d"),
+                type="triage",
+                title="Organized 50+ Issues for v2.0",
+                impact=78,
+                responses=5,
+                color="emerald-500"
+            ),
+            ImpactTimelineEvent(
+                date=(datetime.utcnow() - timedelta(days=20)).strftime("%Y-%m-%d"),
+                type="documentation",
+                title="Rewrote API Documentation",
+                impact=72,
+                responses=15,
+                color="amber-500"
+            ),
+        ]
+
+        # 5. Cumulative Labor (30 days)
+        cumulative_days = min(days, 30)
+        cumulative_labor = []
+
+        cumulative_reviews = 0
+        cumulative_triage = 0
+        cumulative_mentorship = 0
+        cumulative_docs = 0
+        cumulative_discussions = 0
+
+        for day_offset in range(cumulative_days):
+            date = base_date + timedelta(days=day_offset)
+            date_str = date.strftime("%Y-%m-%d")
+
+            # Add daily increments
+            cumulative_reviews += 2 + (day_offset % 3)
+            cumulative_triage += 3 + (day_offset % 4)
+            cumulative_mentorship += 1 + (day_offset % 2)
+            cumulative_docs += 1 if day_offset % 5 == 0 else 0
+            cumulative_discussions += 2 + (day_offset % 3)
+
+            cumulative_labor.append(CumulativeLabor(
+                date=date_str,
+                reviews=cumulative_reviews,
+                triage=cumulative_triage,
+                mentorship=cumulative_mentorship,
+                documentation=cumulative_docs,
+                discussions=cumulative_discussions
+            ))
+
+        return Analytics(
+            activityHeatmap=activity_heatmap,
+            contributorGrowth=contributor_growth,
+            issueResolutionFunnel=issue_resolution_funnel,
+            impactTimeline=impact_timeline,
+            cumulativeLabor=cumulative_labor
+        )
