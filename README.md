@@ -1,40 +1,45 @@
 # Maintainer's Dashboard - Backend API
 
-A modular FastAPI backend for analyzing and supporting open source maintainers.
+A comprehensive FastAPI backend for analyzing and supporting open source maintainers.
 
 ## 🎯 Project Overview
 
-This dashboard helps open source maintainers by providing:
-- **Invisible Labor Scoring** - Track and quantify non-code contributions
-- **Sentiment Analysis** - Understand community dynamics and stress levels
-- **Burnout Risk Detection** - Monitor and prevent maintainer burnout
-- **Shareable Contribution Profiles** - Showcase your full contribution story
+This dashboard provides a unified API endpoint that analyzes open source maintainers and delivers:
+- **Invisible Labor Score (0-100)** - Quantify non-code contributions
+- **Review Impact Score** - Measure code review quality and effectiveness
+- **Community Engagement** - Track community building efforts
+- **Burnout Risk Assessment** - Monitor and prevent maintainer burnout
+- **Sentiment Analysis** - Understand community feedback patterns
+- **Contribution Profile** - Comprehensive shareable profile with achievements
 
 ## 🏗️ Architecture
 
 ```
 decode-dkmc/
-├── main.py                  # FastAPI application entry point
+├── main.py                     # FastAPI application entry point
 ├── app/
-│   ├── core/               # Core configuration
-│   │   └── config.py       # Settings and environment variables
-│   ├── api/                # API routes
+│   ├── core/                   # Core configuration
+│   │   └── config.py           # Settings and environment variables
+│   ├── api/                    # API routes
 │   │   └── v1/
-│   │       └── router.py   # Main API router
-│   ├── modules/            # Feature modules (work independently)
-│   │   ├── invisible_labor_scoring/
-│   │   ├── sentiment_analysis/
-│   │   ├── burnout_risk_detection/
-│   │   └── shareable_contribution_profile/
-│   └── shared/             # Shared utilities
-│       ├── database.py     # Database connection
-│       ├── github_client.py # GitHub API client
-│       ├── cache.py        # Caching service
-│       ├── models.py       # Shared models
-│       ├── exceptions.py   # Custom exceptions
-│       └── utils.py        # Utility functions
-├── requirements.txt        # Python dependencies
-└── .env.example           # Environment variables template
+│   │       └── router.py       # Main API router
+│   ├── maintainer_dashboard/   # Dashboard module
+│   │   ├── routes.py           # API endpoint
+│   │   ├── schemas.py          # Pydantic models
+│   │   ├── service.py          # Business logic orchestration
+│   │   ├── calculator.py       # Metric calculation engine
+│   │   └── ai_insights.py      # Gemini AI integration
+│   └── shared/                 # Shared utilities
+│       ├── database.py         # Database connection
+│       ├── github_client.py    # GitHub API client
+│       ├── cache.py            # Caching service
+│       ├── models.py           # Shared data models
+│       ├── exceptions.py       # Custom exceptions
+│       └── utils.py            # Utility functions
+├── requirements.txt            # Python dependencies
+├── DOCUMENTATION.md            # Detailed documentation
+├── OPENAPI_SPEC.md             # OpenAPI specification
+└── datawehave.md               # Available data sources
 ```
 
 ## 🚀 Getting Started
@@ -68,9 +73,17 @@ decode-dkmc/
    # Edit .env with your configuration
    ```
 
+   Required variables:
+   - `GITHUB_TOKEN` - GitHub personal access token (optional, for real GitHub API calls)
+   - `GEMINI_API_KEY` - Google Gemini API key (optional, for AI insights)
+   - `DATABASE_URL` - Database connection string
+   - `ALLOWED_ORIGINS` - CORS allowed origins
+
 5. **Run the application**
    ```bash
    python main.py
+   # Or use the run script
+   ./run.sh
    ```
 
 6. **Access the API**
@@ -78,164 +91,137 @@ decode-dkmc/
    - Swagger Docs: http://localhost:8000/api/v1/docs
    - ReDoc: http://localhost:8000/api/v1/redoc
 
-## 👥 Team Collaboration
+## 📡 API Usage
 
-### Module Assignment
+### Main Endpoint
 
-Each team member has a dedicated module to work on independently:
+**GET** `/api/v1/dashboard/{username}`
 
-1. **Team Member 1: Invisible Labor Scoring System**
-   - Directory: `app/modules/invisible_labor_scoring/`
-   - Routes: `/api/v1/invisible-labor-scoring/*`
+Returns complete dashboard data for a GitHub user.
 
-2. **Team Member 2: Sentiment Analysis Engine**
-   - Directory: `app/modules/sentiment_analysis/`
-   - Routes: `/api/v1/sentiment-analysis/*`
+**Parameters:**
+- `username` (path) - GitHub username
+- `repository` (query, optional) - Filter by specific repository (format: "owner/repo")
+- `days` (query, default=30) - Time window for analysis (7-365 days)
 
-3. **Team Member 3: Burnout Risk Detection**
-   - Directory: `app/modules/burnout_risk_detection/`
-   - Routes: `/api/v1/burnout-risk-detection/*`
+**Example:**
+```bash
+curl "http://localhost:8000/api/v1/dashboard/sarah_maintainer?days=30"
+```
 
-4. **Team Member 4: Shareable Contribution Profile**
-   - Directory: `app/modules/shareable_contribution_profile/`
-   - Routes: `/api/v1/shareable-contribution-profile/*`
+**Response includes:**
+- Metrics (all scores, weekly activity, trends)
+- Burnout assessment with AI recommendations
+- Sentiment analysis with word frequency
+- Community metrics
+- Contribution profile with achievements & skills
+- Alerts
+- Recent activity timeline
+- Repository health stats
 
-### Working on Your Module
+## 🧮 Metric Calculations
 
-1. Navigate to your module directory
-2. All your work stays within your module folder
-3. Each module has:
-   - `routes.py` - API endpoints
-   - `schemas.py` - Request/response models
-   - `service.py` - Business logic
-   - `README.md` - Module documentation
-   - Create additional files as needed (`models.py`, `utils.py`, etc.)
+All metrics use rigorous, documented formulas:
 
-### Shared Resources
+### Invisible Labor Score (0-100)
+- Code Reviews (35%): Quality and depth of reviews
+- Issue Triage (25%): Labeling, assignment, closure
+- Mentorship (20%): Detailed explanations and guidance
+- Community (15%): Discussions and support
+- Documentation (5%): Docs commits and improvements
 
-Use shared utilities in `app/shared/`:
-- `github_client.py` - GitHub API client
-- `database.py` - Database connection
-- `cache.py` - Caching service
-- `models.py` - Shared data models
-- `utils.py` - Common utilities
+### Review Impact Score (0-100)
+- Thoroughness (40%): Lines reviewed, comment depth
+- Timeliness (30%): Response speed
+- Helpfulness (30%): Approval ratio
 
-### Avoiding Conflicts
+### Burnout Risk (0-100)
+- Workload (30%): Activities per day
+- Irregular Hours (25%): Weekend/late-night work
+- Sentiment Decline (25%): Mood tracking
+- Response Pressure (20%): Activity density
 
-✅ **Safe to modify:**
-- Your module directory (`app/modules/your_module/`)
-- `requirements.txt` (add your dependencies)
+## 🤖 AI Integration
 
-❌ **Avoid modifying:**
-- Other team members' modules
-- Core files unless coordinated
-- `main.py` (unless adding global middleware)
+Uses Google Gemini 2.0 Flash for:
+- Burnout recovery recommendations
+- Sentiment feedback analysis
+- Impact summaries
 
-## 📝 Development Workflow
+**Anti-hallucination measures:**
+- Low temperature (0.3) for factual responses
+- Grounded prompts with specific numeric data
+- Validation against actual data
+- Fallback to safe defaults
 
-1. **Pull latest changes**
-   ```bash
-   git pull origin main
-   ```
+## 🗄️ Data Sources
 
-2. **Create feature branch**
-   ```bash
-   git checkout -b feature/your-module-name
-   ```
+Currently uses mock data for testing. To integrate real GitHub API:
 
-3. **Make changes in your module**
+1. Set `GITHUB_TOKEN` in `.env`
+2. Replace `_fetch_github_data()` in `service.py` with actual API calls
+3. Use the `GitHubClient` in `app/shared/github_client.py`
 
-4. **Test your changes**
-   ```bash
-   python main.py
-   # Visit http://localhost:8000/api/v1/docs
-   ```
+**Available GitHub API endpoints:**
+- User info, repositories, commits
+- Pull requests, reviews, comments
+- Issues, timeline events, labels
+- Discussions (GraphQL)
 
-5. **Commit and push**
-   ```bash
-   git add app/modules/your_module/
-   git commit -m "feat(your-module): description"
-   git push origin feature/your-module-name
-   ```
-
-6. **Create Pull Request**
-
-## 🧪 Testing Your Module
+## 🧪 Testing
 
 ```bash
-# Access your module's API docs
-http://localhost:8000/api/v1/docs
+# Start server
+python main.py
 
-# Test endpoints using Swagger UI
-# Or use curl:
-curl -X POST http://localhost:8000/api/v1/your-module/endpoint \
-  -H "Content-Type: application/json" \
-  -d '{"key": "value"}'
+# Test endpoint
+curl "http://localhost:8000/api/v1/dashboard/sarah_maintainer?days=30"
+
+# Or use Swagger UI
+open http://localhost:8000/api/v1/docs
 ```
 
-## 📚 API Documentation
+## 📚 Documentation
 
-Once running, comprehensive API documentation is available at:
-- **Swagger UI**: http://localhost:8000/api/v1/docs
-- **ReDoc**: http://localhost:8000/api/v1/redoc
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Detailed feature documentation
+- [OPENAPI_SPEC.md](OPENAPI_SPEC.md) - Complete API specification
+- [datawehave.md](datawehave.md) - Available data sources from GitHub
 
-## 🔧 Adding Dependencies
+## 🔧 Development
 
-Add module-specific dependencies to `requirements.txt`:
+### Project Structure
 
-```txt
-# Your Module Name
-your-library==1.0.0
-another-dependency==2.0.0
-```
+- **Modular**: Dashboard logic separated into focused files
+- **Typed**: Full Pydantic validation
+- **Documented**: Every calculation formula explained
+- **Tested**: Ready for real GitHub API integration
 
-Then run:
-```bash
-pip install -r requirements.txt
-```
+### Adding Features
 
-## 🌐 Environment Variables
-
-Required environment variables (see `.env.example`):
-- `GITHUB_TOKEN` - GitHub personal access token
-- `DATABASE_URL` - Database connection string
-- `ALLOWED_ORIGINS` - CORS allowed origins
-
-## 🤝 Contributing
-
-1. Each team member works on their assigned module
-2. Follow the existing code structure
-3. Update module README with your changes
-4. Test your endpoints before pushing
-5. Create descriptive commit messages
-6. Request code review from team
-
-## 📖 Module-Specific Documentation
-
-Each module has its own README with detailed implementation guidelines:
-- [Invisible Labor Scoring](app/modules/invisible_labor_scoring/README.md)
-- [Sentiment Analysis](app/modules/sentiment_analysis/README.md)
-- [Burnout Risk Detection](app/modules/burnout_risk_detection/README.md)
-- [Shareable Contribution Profile](app/modules/shareable_contribution_profile/README.md)
+1. Update `schemas.py` with new models
+2. Add calculations to `calculator.py`
+3. Update `service.py` to orchestrate
+4. Extend AI insights in `ai_insights.py` if needed
 
 ## 🐛 Troubleshooting
 
 **Import errors:**
 ```bash
-# Make sure you're in the project root and virtual environment is activated
+# Make sure virtual environment is activated
+source venv/bin/activate
 python main.py
 ```
 
 **Database errors:**
 ```bash
-# Delete the database and restart
+# Delete database and restart
 rm maintainers_dashboard.db
 python main.py
 ```
 
 **Port already in use:**
 ```bash
-# Change port in main.py or kill the process using port 8000
+# Change port in main.py or kill process
 lsof -ti:8000 | xargs kill -9
 ```
 
@@ -243,11 +229,11 @@ lsof -ti:8000 | xargs kill -9
 
 [Add your license here]
 
-## 👨‍💻 Team
+## 🙏 Acknowledgments
 
-- Team Member 1: Invisible Labor Scoring
-- Team Member 2: Sentiment Analysis
-- Team Member 3: Burnout Risk Detection
-- Team Member 4: Shareable Contribution Profile
-# decode-backend
-# decode-backend
+Built with:
+- FastAPI - Modern Python web framework
+- Pydantic - Data validation
+- SQLAlchemy - Database ORM
+- Google Gemini - AI insights
+- GitHub API - Data source

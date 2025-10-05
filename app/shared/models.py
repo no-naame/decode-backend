@@ -46,21 +46,14 @@ class AnalysisCache(Base):
     """
     Cache for expensive analysis results.
 
-    Shared across modules to avoid re-computation.
+    Used to store computed dashboard metrics to avoid re-computation.
     """
     __tablename__ = "analysis_cache"
 
     id = Column(Integer, primary_key=True, index=True)
     cache_key = Column(String, unique=True, index=True, nullable=False)
-    module = Column(String, nullable=False)  # which module created this
+    module = Column(String, nullable=False)  # e.g., "dashboard", "metrics"
     data = Column(JSON, nullable=False)
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
-# Module-specific models should be defined in their respective modules
-# Example structure:
-# app/modules/invisible_labor_scoring/models.py
-# app/modules/sentiment_analysis/models.py
-# etc.
